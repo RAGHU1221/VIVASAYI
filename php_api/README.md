@@ -39,3 +39,9 @@ Set `CORS_ALLOWED_ORIGINS` to a comma-separated list for browser clients, for ex
 ```bash
 CORS_ALLOWED_ORIGINS=http://localhost:3000,http://localhost:5173
 ```
+
+## SMS OTP delivery
+
+`POST /auth/request-otp` sends the OTP via [Fast2SMS](https://www.fast2sms.com)'s OTP route. Set
+`FAST2SMS_API_KEY` in `.env` to your Fast2SMS API key (found under **Dev API** in your Fast2SMS
+dashboard). Without it, OTP requests fail with a 502 and the reason is written to the PHP error log.

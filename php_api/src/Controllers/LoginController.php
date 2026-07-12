@@ -5,6 +5,7 @@ namespace App\Controllers;
 use App\Services\AuditLogService;
 use App\Services\AuthOtpService;
 use App\Services\SessionService;
+use App\Services\SmsService;
 use App\Services\UserService;
 use Firebase\JWT\JWT;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -16,6 +17,7 @@ class LoginController
     private AuthOtpService $otpService;
     private SessionService $sessionService;
     private AuditLogService $auditLogService;
+    private SmsService $smsService;
 
     public function __construct()
     {
@@ -23,6 +25,7 @@ class LoginController
         $this->otpService = new AuthOtpService();
         $this->sessionService = new SessionService();
         $this->auditLogService = new AuditLogService();
+        $this->smsService = new SmsService();
     }
 
     public function requestOtp(Request $request): JsonResponse
@@ -43,7 +46,12 @@ class LoginController
         }
 
         $otp = $this->otpService->createOtpCode($user->id, $phone);
-        $this->auditLogService->createLog($user->id, 'login.request_otp', ['phone' => $phone], $request->getClientIp());
+        $sent = $this->smsService->sendOtp($phone, $otp['otp_code']);
+        $this->auditLogService->createLog($user->id, 'login.request_otp', ['phone' => $phone, 'sms_sent' => $sent], $request->getClientIp());
+
+        if (!$sent) {
+            return new JsonResponse(['error' => 'Unable to send OTP SMS. Please try again shortly.'], 502);
+        }
 
         return new JsonResponse([
             'phone' => $phone,
