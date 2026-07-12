@@ -54,11 +54,8 @@ class _LoginScreenState extends State<LoginScreen> {
         context.go('/dashboard');
       }
     } on DioException catch (error) {
-      final message = error.response?.data is Map<String, dynamic>
-          ? error.response?.data['error']?.toString() ?? 'Login failed.'
-          : 'Login failed.';
       if (!mounted) return;
-      setState(() => _errorMessage = message);
+      setState(() => _errorMessage = _describeError(error, 'Login failed.'));
     } catch (_) {
       if (!mounted) return;
       setState(() => _errorMessage = 'Login failed.');
@@ -83,9 +80,9 @@ class _LoginScreenState extends State<LoginScreen> {
       await _authService.requestOtp(_phoneController.text.trim());
       if (!mounted) return;
       context.go('/otp', extra: {'phone': _phoneController.text.trim()});
-    } on DioException catch (_) {
+    } on DioException catch (error) {
       if (!mounted) return;
-      setState(() => _errorMessage = 'Unable to request OTP.');
+      setState(() => _errorMessage = _describeError(error, 'Unable to request OTP.'));
     } catch (_) {
       if (!mounted) return;
       setState(() => _errorMessage = 'Unable to request OTP.');
@@ -93,6 +90,18 @@ class _LoginScreenState extends State<LoginScreen> {
       if (!mounted) return;
       setState(() => _isLoading = false);
     }
+  }
+
+  String _describeError(DioException error, String fallback) {
+    if (error.type == DioExceptionType.connectionError ||
+        error.type == DioExceptionType.connectionTimeout) {
+      return 'சர்வரை இணைக்க முடியவில்லை. இணைய இணைப்பு / சர்வர் முகவரியை சரிபார்க்கவும்.';
+    }
+    final data = error.response?.data;
+    if (data is Map<String, dynamic> && data['error'] != null) {
+      return data['error'].toString();
+    }
+    return fallback;
   }
 
   @override
@@ -107,15 +116,15 @@ class _LoginScreenState extends State<LoginScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
-                      Text('வணக்கம்', style: TextStyle(fontSize: 34, fontWeight: FontWeight.bold)),
-                      SizedBox(height: 8),
-                      Text('உங்கள் விவசாயத்திற்கான பாதுகாப்பான புகுபதிகை', style: TextStyle(fontSize: 16, color: Colors.black54)),
-                    ],
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: const [
+                  Text('வணக்கம்', style: TextStyle(fontSize: 34, fontWeight: FontWeight.bold)),
+                  SizedBox(height: 8),
+                  Text(
+                    'உங்கள் விவசாயத்திற்கான பாதுகாப்பான புகுபதிகை',
+                    style: TextStyle(fontSize: 16, color: Colors.black54),
+                    softWrap: true,
                   ),
                 ],
               ),
