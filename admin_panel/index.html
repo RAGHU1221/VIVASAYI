@@ -1,0 +1,478 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Vivasayi AI Super App Admin</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.4/css/all.min.css" rel="stylesheet">
+  <style>
+    body { min-height: 100vh; background: #f8fafc; }
+    .sidebar { min-height: 100vh; background: #0f172a; color: #ffffff; }
+    .sidebar a { color: #cbd5e1; }
+    .sidebar a.active, .sidebar a:hover { color: #ffffff; }
+  </style>
+</head>
+<body>
+<div class="container-fluid">
+  <div class="row">
+    <nav class="col-md-3 col-xl-2 sidebar d-md-block p-3">
+      <h4 class="text-white">Vivasayi Admin</h4>
+      <ul class="nav flex-column">
+        <li class="nav-item"><a class="nav-link active" href="#" data-view="dashboard">Dashboard</a></li>
+        <li class="nav-item"><a class="nav-link" href="#" data-view="users">Users</a></li>
+        <li class="nav-item"><a class="nav-link" href="#" data-view="farmers">Farmers</a></li>
+        <li class="nav-item"><a class="nav-link" href="#" data-view="audit-logs">Audit Logs</a></li>
+        <li class="nav-item"><a class="nav-link" href="#" data-view="settings">Settings</a></li>
+      </ul>
+    </nav>
+    <main class="col-md-9 ms-sm-auto col-xl-10 px-md-4 py-4">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h2">Dashboard</h1>
+        <div>
+          <span id="logged-in-user" class="me-3 d-none"></span>
+          <button class="btn btn-outline-secondary d-none" id="logout-button">Logout</button>
+        </div>
+      </div>
+      <section class="mt-4" id="login-section">
+        <div class="card shadow-sm">
+          <div class="card-body">
+            <h5 class="card-title">Admin Login</h5>
+            <p class="card-text text-muted">Sign in with admin credentials to access the audit dashboard.</p>
+            <form id="admin-login-form" class="row g-3">
+              <div class="col-md-6">
+                <label for="admin-phone" class="form-label">Phone</label>
+                <input type="text" class="form-control" id="admin-phone" placeholder="9999999999" required>
+              </div>
+              <div class="col-md-6">
+                <label for="admin-password" class="form-label">Password</label>
+                <input type="password" class="form-control" id="admin-password" placeholder="Password" required>
+              </div>
+              <div class="col-12">
+                <button type="submit" class="btn btn-primary">Sign In</button>
+              </div>
+            </form>
+            <div id="login-error" class="mt-3 text-danger"></div>
+          </div>
+        </div>
+      </section>
+      <div id="admin-content" class="d-none">
+      <div class="row g-4">
+        <div class="col-12 col-md-6 col-xl-3">
+          <div class="card shadow-sm">
+            <div class="card-body">
+              <h5 class="card-title">Total Farmers</h5>
+              <p class="card-text display-6">0</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-12 col-md-6 col-xl-3">
+          <div class="card shadow-sm">
+            <div class="card-body">
+              <h5 class="card-title">Active Sessions</h5>
+              <p class="card-text display-6">0</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-12 col-md-6 col-xl-3">
+          <div class="card shadow-sm">
+            <div class="card-body">
+              <h5 class="card-title">New Registrations</h5>
+              <p class="card-text display-6">0</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-12 col-md-6 col-xl-3">
+          <div class="card shadow-sm">
+            <div class="card-body">
+              <h5 class="card-title">System Health</h5>
+              <p class="card-text display-6 text-success">OK</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <section class="mt-4" id="dashboard-section">
+        <div class="card shadow-sm">
+          <div class="card-body">
+            <h5 class="card-title">Welcome to the Admin Panel</h5>
+            <p class="card-text">This is the foundation dashboard for Vivasayi AI Super App. Build reports, manage users, and monitor system health from this admin panel.</p>
+          </div>
+        </div>
+      </section>
+      <section class="mt-4 d-none" id="audit-logs-section">
+        <div class="card shadow-sm">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <div>
+                <h5 class="card-title">Audit Logs</h5>
+                <p class="card-text text-muted mb-0">Review recent user actions and security events.</p>
+              </div>
+              <button class="btn btn-primary" id="refresh-audit-logs">Refresh</button>
+            </div>
+            <div class="table-responsive">
+              <table class="table table-striped table-hover" id="audit-logs-table">
+                <thead>
+                  <tr>
+                    <th scope="col">Time</th>
+                    <th scope="col">User</th>
+                    <th scope="col">Action</th>
+                    <th scope="col">Context</th>
+                    <th scope="col">IP</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr><td colspan="5" class="text-center">Loading audit logs...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section class="mt-4 d-none" id="users-section">
+        <div class="card shadow-sm">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <div>
+                <h5 class="card-title">Users</h5>
+                <p class="card-text text-muted mb-0">Review registered app users and account status.</p>
+              </div>
+              <button class="btn btn-primary" id="refresh-users">Refresh</button>
+            </div>
+            <div class="table-responsive">
+              <table class="table table-striped table-hover" id="users-table">
+                <thead>
+                  <tr>
+                    <th scope="col">Name</th>
+                    <th scope="col">Phone</th>
+                    <th scope="col">Role</th>
+                    <th scope="col">Language</th>
+                    <th scope="col">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr><td colspan="5" class="text-center">Select refresh to load users.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section class="mt-4 d-none" id="farmers-section">
+        <div class="card shadow-sm">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <div>
+                <h5 class="card-title">Farmers</h5>
+                <p class="card-text text-muted mb-0">Review farmer profiles captured in the system.</p>
+              </div>
+              <button class="btn btn-primary" id="refresh-farmers">Refresh</button>
+            </div>
+            <div class="table-responsive">
+              <table class="table table-striped table-hover" id="farmers-table">
+                <thead>
+                  <tr>
+                    <th scope="col">Name</th>
+                    <th scope="col">Phone</th>
+                    <th scope="col">District</th>
+                    <th scope="col">State</th>
+                    <th scope="col">Joined</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr><td colspan="5" class="text-center">Select refresh to load farmers.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section class="mt-4 d-none" id="settings-section">
+        <div class="card shadow-sm">
+          <div class="card-body">
+            <h5 class="card-title">Settings</h5>
+            <p class="card-text text-muted mb-0">Configure API origin and administration preferences from this area.</p>
+          </div>
+        </div>
+      </section>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  const views = {
+    login: document.getElementById('login-section'),
+    dashboard: document.getElementById('dashboard-section'),
+    'audit-logs': document.getElementById('audit-logs-section'),
+    users: document.getElementById('users-section'),
+    farmers: document.getElementById('farmers-section'),
+    settings: document.getElementById('settings-section'),
+  };
+
+  const adminContent = document.getElementById('admin-content');
+  const sidebarLinks = document.querySelectorAll('.sidebar .nav-link');
+  const loggedInUser = document.getElementById('logged-in-user');
+  const logoutButton = document.getElementById('logout-button');
+  const loginError = document.getElementById('login-error');
+
+  const tokenKey = 'vivasayi_admin_token';
+  const userKey = 'vivasayi_admin_user';
+  const apiBaseUrlKey = 'vivasayi_admin_api_base_url';
+
+  function getApiBaseUrl() {
+    return (window.localStorage.getItem(apiBaseUrlKey) || 'http://localhost:8000').replace(/\/$/, '');
+  }
+
+  function apiUrl(path) {
+    return `${getApiBaseUrl()}${path}`;
+  }
+
+  function getToken() {
+    return window.localStorage.getItem(tokenKey);
+  }
+
+  function setToken(token) {
+    window.localStorage.setItem(tokenKey, token);
+  }
+
+  function setUser(user) {
+    window.localStorage.setItem(userKey, JSON.stringify(user));
+  }
+
+  function clearAuth() {
+    window.localStorage.removeItem(tokenKey);
+    window.localStorage.removeItem(userKey);
+  }
+
+  function getUser() {
+    try {
+      const stored = window.localStorage.getItem(userKey);
+      return stored ? JSON.parse(stored) : null;
+    } catch {
+      return null;
+    }
+  }
+
+  function isAuthenticated() {
+    return Boolean(getToken());
+  }
+
+  function updateAuthState() {
+    const authenticated = isAuthenticated();
+    adminContent.classList.toggle('d-none', !authenticated);
+    views.login.classList.toggle('d-none', authenticated);
+    sidebarLinks.forEach(link => {
+      const allow = authenticated || link.dataset.view === 'login';
+      link.classList.toggle('disabled', !authenticated && link.dataset.view !== 'login');
+    });
+
+    if (authenticated) {
+      const user = getUser();
+      loggedInUser.textContent = user ? `Logged in as ${user.name || user.phone}` : '';
+      loggedInUser.classList.remove('d-none');
+      logoutButton.classList.remove('d-none');
+    } else {
+      loggedInUser.classList.add('d-none');
+      logoutButton.classList.add('d-none');
+    }
+  }
+
+  function setActiveView(viewKey) {
+    const selectedView = isAuthenticated() ? viewKey : 'login';
+    sidebarLinks.forEach(link => {
+      link.classList.toggle('active', link.dataset.view === selectedView);
+    });
+
+    Object.keys(views).forEach(key => {
+      views[key].classList.toggle('d-none', key !== selectedView);
+    });
+
+    if (selectedView === 'audit-logs') {
+      loadAuditLogs();
+    } else if (selectedView === 'users') {
+      loadUsers();
+    } else if (selectedView === 'farmers') {
+      loadFarmers();
+    }
+  }
+
+  async function loginAdmin(event) {
+    event.preventDefault();
+    loginError.textContent = '';
+
+    const phone = document.getElementById('admin-phone').value.trim();
+    const password = document.getElementById('admin-password').value.trim();
+
+    if (!phone || !password) {
+      loginError.textContent = 'Phone and password are required.';
+      return;
+    }
+
+    try {
+      const response = await fetch(apiUrl('/auth/login'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone, password }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        loginError.textContent = data.error || 'Login failed.';
+        return;
+      }
+
+      setToken(data.token);
+      setUser(data.user);
+      updateAuthState();
+      setActiveView('dashboard');
+    } catch (error) {
+      loginError.textContent = 'Unable to login. Please try again.';
+    }
+  }
+
+  async function loadAuditLogs() {
+    const tbody = document.querySelector('#audit-logs-table tbody');
+    tbody.innerHTML = '<tr><td colspan="5" class="text-center">Loading audit logs...</td></tr>';
+
+    try {
+      const logs = await apiGet('/audit-logs?limit=20');
+      if (!Array.isArray(logs) || logs.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center">No audit entries found.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = logs.map(log => {
+        const context = formatContext(log.context);
+        return `
+          <tr>
+            <td>${escapeHtml(new Date(log.created_at).toLocaleString())}</td>
+            <td>${escapeHtml(log.user_id || 'System')}</td>
+            <td>${escapeHtml(log.action || '')}</td>
+            <td><pre class="mb-0" style="white-space: pre-wrap; word-break: break-word;">${escapeHtml(context)}</pre></td>
+            <td>${escapeHtml(log.ip_address || '-')}</td>
+          </tr>
+        `;
+      }).join('');
+    } catch (error) {
+      tbody.innerHTML = `<tr><td colspan="5" class="text-danger text-center">Unable to load audit logs: ${escapeHtml(error.message)}</td></tr>`;
+    }
+  }
+
+  async function loadUsers() {
+    const tbody = document.querySelector('#users-table tbody');
+    tbody.innerHTML = '<tr><td colspan="5" class="text-center">Loading users...</td></tr>';
+
+    try {
+      const users = await apiGet('/users');
+      if (!Array.isArray(users) || users.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center">No users found.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = users.map(user => `
+        <tr>
+          <td>${escapeHtml(user.name || '-')}</td>
+          <td>${escapeHtml(user.phone || '-')}</td>
+          <td>${escapeHtml(user.role || '-')}</td>
+          <td>${escapeHtml(user.language || '-')}</td>
+          <td>${escapeHtml(Number(user.is_active) === 1 ? 'Active' : 'Inactive')}</td>
+        </tr>
+      `).join('');
+    } catch (error) {
+      tbody.innerHTML = `<tr><td colspan="5" class="text-danger text-center">Unable to load users: ${escapeHtml(error.message)}</td></tr>`;
+    }
+  }
+
+  async function loadFarmers() {
+    const tbody = document.querySelector('#farmers-table tbody');
+    tbody.innerHTML = '<tr><td colspan="5" class="text-center">Loading farmers...</td></tr>';
+
+    try {
+      const farmers = await apiGet('/farmers');
+      if (!Array.isArray(farmers) || farmers.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center">No farmers found.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = farmers.map(farmer => `
+        <tr>
+          <td>${escapeHtml(farmer.name || '-')}</td>
+          <td>${escapeHtml(farmer.phone || '-')}</td>
+          <td>${escapeHtml(farmer.district || '-')}</td>
+          <td>${escapeHtml(farmer.state || '-')}</td>
+          <td>${escapeHtml(formatDate(farmer.created_at))}</td>
+        </tr>
+      `).join('');
+    } catch (error) {
+      tbody.innerHTML = `<tr><td colspan="5" class="text-danger text-center">Unable to load farmers: ${escapeHtml(error.message)}</td></tr>`;
+    }
+  }
+
+  async function apiGet(path) {
+    const token = getToken();
+    const response = await fetch(apiUrl(path), {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    if (!response.ok) {
+      throw new Error(response.statusText || 'Fetch failed');
+    }
+
+    return response.json();
+  }
+
+  function formatDate(value) {
+    if (!value) return '-';
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? value : date.toLocaleString();
+  }
+
+  function formatContext(value) {
+    if (!value) return '';
+    if (typeof value === 'object') return JSON.stringify(value);
+
+    try {
+      return JSON.stringify(JSON.parse(value));
+    } catch {
+      return String(value);
+    }
+  }
+
+  function escapeHtml(value) {
+    return String(value)
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;')
+      .replaceAll("'", '&#039;');
+  }
+
+  function logoutAdmin() {
+    clearAuth();
+    updateAuthState();
+    setActiveView('login');
+  }
+
+  document.getElementById('admin-login-form').addEventListener('submit', loginAdmin);
+  document.querySelectorAll('.sidebar .nav-link').forEach(link => {
+    link.addEventListener('click', event => {
+      event.preventDefault();
+      const view = link.dataset.view;
+      if (!view) return;
+      if (!isAuthenticated() && view !== 'login') {
+        setActiveView('login');
+        return;
+      }
+      setActiveView(view);
+    });
+  });
+  document.getElementById('refresh-audit-logs').addEventListener('click', loadAuditLogs);
+  document.getElementById('refresh-users').addEventListener('click', loadUsers);
+  document.getElementById('refresh-farmers').addEventListener('click', loadFarmers);
+  logoutButton.addEventListener('click', logoutAdmin);
+
+  updateAuthState();
+  setActiveView(isAuthenticated() ? 'dashboard' : 'login');
+</script>
+</body>
+</html>
