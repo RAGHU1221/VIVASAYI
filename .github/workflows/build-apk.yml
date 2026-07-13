@@ -27,6 +27,8 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
+          flutter-version: '3.24.5'
+          cache: true
 
       - name: Get dependencies
         run: flutter pub get
@@ -39,3 +41,4 @@ jobs:
         with:
           name: vivasayi-apk
           path: flutter_app/build/app/outputs/flutter-apk/app-release.apk
+          retention-days: 30
