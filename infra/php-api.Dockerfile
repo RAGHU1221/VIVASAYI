@@ -20,7 +20,7 @@ RUN composer install --no-dev --prefer-dist --no-interaction --no-progress --opt
 COPY php_api/ ./
 
 # Render assigns a dynamic $PORT; Apache must bind to it at container start
-RUN printf '#!/bin/bash\nsed -ri "s/Listen 80/Listen \\${PORT:-80}/" /etc/apache2/ports.conf\nsed -ri "s/:80/:\\${PORT:-80}/" /etc/apache2/sites-available/*.conf\nexec apache2-foreground\n' > /usr/local/bin/start-apache.sh \
+RUN printf '#!/bin/bash\nPORT="${PORT:-80}"\nsed -ri "s/Listen 80/Listen ${PORT}/" /etc/apache2/ports.conf\nsed -ri "s/:80/:${PORT}/" /etc/apache2/sites-available/*.conf\nexec apache2-foreground\n' > /usr/local/bin/start-apache.sh \
     && chmod +x /usr/local/bin/start-apache.sh
 
 EXPOSE 80
