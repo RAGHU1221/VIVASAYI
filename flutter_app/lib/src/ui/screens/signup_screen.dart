@@ -68,7 +68,6 @@ class _SignupScreenState extends State<SignupScreen> {
         if (!mounted) return;
         context.go('/dashboard');
       } else {
-        // Signup success, token illa — login page-ku anuppu
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('பதிவு வெற்றி! உள்நுழையவும்.')),
@@ -202,23 +201,26 @@ class _SignupScreenState extends State<SignupScreen> {
                 ),
               ),
               const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text('ஏற்கனவே கணக்கு உள்ளதா? ',
-                      style: TextStyle(color: Colors.grey[700], fontSize: 16)),
-                  GestureDetector(
-                    onTap: () => context.go('/login'),
-                    child: const Text(
-                      'உள் நுழைய',
-                      style: TextStyle(
-                        color: Color(0xFF2E7D32),
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
+              Center(
+                child: Wrap(
+                  alignment: WrapAlignment.center,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    Text('ஏற்கனவே கணக்கு உள்ளதா? ',
+                        style: TextStyle(color: Colors.grey[700], fontSize: 16)),
+                    GestureDetector(
+                      onTap: () => context.go('/login'),
+                      child: const Text(
+                        'உள் நுழைய',
+                        style: TextStyle(
+                          color: Color(0xFF2E7D32),
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ],
           ),
