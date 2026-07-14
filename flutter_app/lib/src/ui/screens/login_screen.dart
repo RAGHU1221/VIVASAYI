@@ -101,7 +101,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: const [
                   Text('வணக்கம்',
-                      style: TextStyle(fontSize: 34, fontWeight: FontWeight.bold)),
+                      style:
+                          TextStyle(fontSize: 34, fontWeight: FontWeight.bold)),
                   SizedBox(height: 8),
                   Text(
                     'உங்கள் விவசாயத்திற்கான பாதுகாப்பான புகுபதிகை',
@@ -116,7 +117,8 @@ class _LoginScreenState extends State<LoginScreen> {
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(28),
                   boxShadow: [
-                    BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 18)
+                    BoxShadow(
+                        color: Colors.black.withOpacity(0.04), blurRadius: 18)
                   ],
                 ),
                 padding: const EdgeInsets.all(24),
@@ -160,34 +162,40 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
               const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text('புதிய பயனரா? ',
-                      style: TextStyle(color: Colors.grey[700], fontSize: 16)),
-                  GestureDetector(
-                    onTap: () => context.push('/signup'),
-                    child: const Text(
-                      'பதிவு செய்க',
-                      style: TextStyle(
-                        color: Color(0xFF2E7D32),
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
+              Center(
+                child: Wrap(
+                  alignment: WrapAlignment.center,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    Text('புதிய பயனரா? ',
+                        style: TextStyle(color: Colors.grey[700], fontSize: 16)),
+                    GestureDetector(
+                      onTap: () => context.push('/signup'),
+                      child: const Text(
+                        'பதிவு செய்க',
+                        style: TextStyle(
+                          color: Color(0xFF2E7D32),
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
               const SizedBox(height: 22),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text('உதவி தேவைவா?',
-                      style: TextStyle(color: Colors.black54)),
-                  const SizedBox(width: 4),
-                  TextButton(
-                      onPressed: () {}, child: const Text('தொடர்பிற்கு')),
-                ],
+              Center(
+                child: Wrap(
+                  alignment: WrapAlignment.center,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    const Text('உதவி தேவையா?',
+                        style: TextStyle(color: Colors.black54)),
+                    const SizedBox(width: 4),
+                    TextButton(
+                        onPressed: () {}, child: const Text('தொடர்பிற்கு')),
+                  ],
+                ),
               ),
             ],
           ),
