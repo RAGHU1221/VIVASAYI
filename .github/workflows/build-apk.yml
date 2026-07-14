@@ -33,7 +33,7 @@ jobs:
         run: flutter pub get
 
       - name: Build release APK
-     run: flutter build apk --release --dart-define=API_BASE_URL=https://vivasayi.site.je/php_api/public
+        run: flutter build apk --release --dart-define=API_BASE_URL=https://vivasayi.site.je/php_api/public
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
