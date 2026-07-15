@@ -26,9 +26,14 @@ class ApiClient {
       },
       onError: (error, handler) async {
         // 401 mattum dhan token clear — server confirm panna reject.
-        // Timeout / connection error na token thoda koodadhu
-        // (Render thoongittu irukkalam).
-        if (error.response?.statusCode == 401) {
+        // AANA: PIN verify / auth endpoints la 401 na "wrong PIN / wrong
+        // password" nu artham — session ah thoda koodadhu!
+        final path = error.requestOptions.path;
+        final isAuthEndpoint = path.startsWith('/auth/login') ||
+            path.startsWith('/auth/signup') ||
+            path.startsWith('/auth/pin') ||
+            path.contains('/pin/verify');
+        if (error.response?.statusCode == 401 && !isAuthEndpoint) {
           await AuthNotifier.instance.clearToken();
         }
         handler.next(error);
@@ -54,7 +59,7 @@ class ApiClient {
   /// Render cold-start wake-up ping — main() la await illama call pannunga.
   void warmUp() {
     _dio
-        .get('/api/ping')
-        .catchError((_) => Response(requestOptions: RequestOptions(path: '/api/ping')));
+        .get('/health')
+        .catchError((_) => Response(requestOptions: RequestOptions(path: '/health')));
   }
 }
