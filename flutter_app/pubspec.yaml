@@ -29,6 +29,12 @@ dependencies:
   url_launcher: ^6.3.0
   geolocator: ^13.0.1
 
+dependency_overrides:
+  # geolocator 13.x resolves to geolocator_android 4.6.2, which ships a broken
+  # android/build.gradle (missing compileSdkVersion) and fails Gradle builds.
+  # Force the fixed native implementation.
+  geolocator_android: ^5.0.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
