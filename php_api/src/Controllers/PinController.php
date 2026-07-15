@@ -56,7 +56,7 @@ class PinController
 
         $secret = $_ENV['JWT_SECRET'] ?? 'change_me_securely';
         $issuedAt = time();
-        $expiresAt = $issuedAt + 3600;
+        $expiresAt = $issuedAt + (int) ($_ENV['JWT_TTL'] ?? 2592000); // default 30 days
         $tokenPayload = [
             'sub' => $user->id,
             'phone' => $user->phone,
