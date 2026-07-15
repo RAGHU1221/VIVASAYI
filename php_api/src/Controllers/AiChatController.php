@@ -7,6 +7,18 @@ use App\Middleware\AuthMiddleware;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 
+/**
+ * AI Chat controller — OpenAI-compatible Chat Completions API (Colibri AI).
+ *
+ * Configuration (Render env variables):
+ *   AI_BASE_URL  — Colibri server base URL (e.g. https://your-colibri-server.com)
+ *   AI_API_KEY   — Bearer API key
+ *   AI_MODEL     — model name (default: glm-5.2-colibri)
+ *
+ * Endpoint called: POST {AI_BASE_URL}/v1/chat/completions
+ * Response parsed: choices[0].message.content
+ * Automatically retries once on network/server failure.
+ */
 class AiChatController
 {
     private const SYSTEM_PROMPT = 'நீங்கள் "விவசாயி AI உதவியாளர்" - தமிழ்நாடு விவசாயிகளுக்கான நட்பான AI உதவியாளர். '
@@ -19,6 +31,7 @@ class AiChatController
 
     private const MAX_MESSAGE_LENGTH = 2000;
     private const HISTORY_CONTEXT_LIMIT = 10;
+    private const MAX_ATTEMPTS = 2; // 1 request + 1 automatic retry
 
     private function ensureTable(): void
     {
@@ -42,7 +55,8 @@ class AiChatController
         }
 
         $apiKey = $_ENV['AI_API_KEY'] ?? '';
-        if ($apiKey === '') {
+        $baseUrl = rtrim($_ENV['AI_BASE_URL'] ?? '', '/');
+        if ($apiKey === '' || $baseUrl === '') {
             return new JsonResponse(['error' => 'AI சேவை இன்னும் அமைக்கப்படவில்லை'], 503);
         }
 
@@ -62,20 +76,21 @@ class AiChatController
         $this->ensureTable();
         $db = Database::getConnection();
 
-        // Last N messages context ku (reverse chronological fetch, then flip)
+        // Previous chat history — last N messages as conversation context
         $stmt = $db->prepare(
             'SELECT role, message FROM ai_chats WHERE user_id = :uid ORDER BY id DESC LIMIT ' . self::HISTORY_CONTEXT_LIMIT
         );
         $stmt->execute(['uid' => $userId]);
         $history = array_reverse($stmt->fetchAll());
 
-        $messages = [];
+        // OpenAI Chat Completions format: system prompt as first message
+        $messages = [['role' => 'system', 'content' => self::SYSTEM_PROMPT]];
         foreach ($history as $row) {
             $messages[] = ['role' => $row['role'], 'content' => $row['message']];
         }
         $messages[] = ['role' => 'user', 'content' => $message];
 
-        $reply = $this->callAnthropic($apiKey, $messages);
+        $reply = $this->callChatCompletions($baseUrl, $apiKey, $messages);
         if ($reply === null) {
             return new JsonResponse(['error' => 'AI பதில் பெற முடியவில்லை. சிறிது நேரம் கழித்து முயற்சிக்கவும்.'], 502);
         }
@@ -117,18 +132,36 @@ class AiChatController
         return new JsonResponse(['message' => 'Chat history cleared']);
     }
 
-    private function callAnthropic(string $apiKey, array $messages): ?string
+    /**
+     * Calls the OpenAI-compatible Chat Completions endpoint.
+     * Retries once automatically on failure (network error, 5xx, bad response).
+     */
+    private function callChatCompletions(string $baseUrl, string $apiKey, array $messages): ?string
     {
-        $model = $_ENV['AI_MODEL'] ?? 'claude-haiku-4-5-20251001';
+        $model = $_ENV['AI_MODEL'] ?? 'glm-5.2-colibri';
 
         $body = json_encode([
             'model' => $model,
-            'max_tokens' => 1024,
-            'system' => self::SYSTEM_PROMPT,
             'messages' => $messages,
+            'max_tokens' => 1024,
         ], JSON_UNESCAPED_UNICODE);
 
-        $ch = curl_init('https://api.anthropic.com/v1/messages');
+        for ($attempt = 1; $attempt <= self::MAX_ATTEMPTS; $attempt++) {
+            $reply = $this->requestOnce($baseUrl . '/v1/chat/completions', $apiKey, $body);
+            if ($reply !== null) {
+                return $reply;
+            }
+            if ($attempt < self::MAX_ATTEMPTS) {
+                usleep(800000); // 0.8s wait before the single retry
+            }
+        }
+
+        return null;
+    }
+
+    private function requestOnce(string $url, string $apiKey, string $body): ?string
+    {
+        $ch = curl_init($url);
         curl_setopt_array($ch, [
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_POST => true,
@@ -137,25 +170,31 @@ class AiChatController
             CURLOPT_CONNECTTIMEOUT => 10,
             CURLOPT_HTTPHEADER => [
                 'Content-Type: application/json',
-                'x-api-key: ' . $apiKey,
-                'anthropic-version: 2023-06-01',
+                'Authorization: Bearer ' . $apiKey,
             ],
         ]);
 
         $response = curl_exec($ch);
         $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $curlError = curl_error($ch);
         curl_close($ch);
 
         if ($response === false || $status !== 200) {
-            error_log('AI API error: HTTP ' . $status . ' — ' . substr((string) $response, 0, 500));
+            error_log('AI API error: HTTP ' . $status . ' curl=' . $curlError
+                . ' body=' . substr((string) $response, 0, 500));
             return null;
         }
 
         $data = json_decode($response, true);
-        if (!is_array($data) || !isset($data['content'][0]['text'])) {
+
+        // OpenAI Chat Completions response: choices[0].message.content
+        if (!is_array($data) || !isset($data['choices'][0]['message']['content'])) {
+            error_log('AI API unexpected response: ' . substr($response, 0, 500));
             return null;
         }
 
-        return $data['content'][0]['text'];
+        $content = trim((string) $data['choices'][0]['message']['content']);
+
+        return $content !== '' ? $content : null;
     }
 }
