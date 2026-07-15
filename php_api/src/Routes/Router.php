@@ -32,6 +32,7 @@ class Router
             $r->addRoute('POST', '/auth/login', [self::class, 'login']);
             $r->addRoute('POST', '/auth/signup', [self::class, 'signup']);
             $r->addRoute('POST', '/auth/pin/login', [self::class, 'loginWithPin']);
+            $r->addRoute('GET', '/auth/validate', [self::class, 'validateToken']);
             $r->addRoute('GET', '/profile', [self::class, 'profile']);
             $r->addRoute('GET', '/profile/stats', [self::class, 'profileStats']);
             $r->addRoute('GET', '/profile/farms', [self::class, 'profileFarms']);
@@ -82,6 +83,16 @@ class Router
     public static function health(Request $request): Response
     {
         return new Response(json_encode(['status' => 'ok']), Response::HTTP_OK, ['Content-Type' => 'application/json']);
+    }
+
+    public static function validateToken(Request $request, array $vars): Response
+    {
+        $authResponse = AuthMiddleware::authenticate($request);
+        if ($authResponse !== null) {
+            return $authResponse; // 401 — token invalid/expired/revoked
+        }
+
+        return new Response(json_encode(['valid' => true]), Response::HTTP_OK, ['Content-Type' => 'application/json']);
     }
 
     public static function login(Request $request, array $vars): Response
