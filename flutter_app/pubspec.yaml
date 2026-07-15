@@ -20,7 +20,6 @@ dependencies:
   connectivity_plus: ^4.0.0
   flutter_svg: ^2.0.0
   local_auth: ^2.3.0
-  tflite_flutter: ^0.11.0
   camera: ^0.11.0
   image_picker: ^1.1.2
   fl_chart: ^0.69.0
@@ -28,12 +27,6 @@ dependencies:
   path_provider: ^2.1.0
   url_launcher: ^6.3.0
   geolocator: ^13.0.1
-
-dependency_overrides:
-  # geolocator 13.x resolves to geolocator_android 4.6.2, which ships a broken
-  # android/build.gradle (missing compileSdkVersion) and fails Gradle builds.
-  # Force the fixed native implementation.
-  geolocator_android: ^5.0.1
 
 dev_dependencies:
   flutter_test:
