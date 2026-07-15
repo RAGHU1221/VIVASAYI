@@ -13,6 +13,21 @@ class AuthMiddleware
     public static function authenticate(Request $request): ?JsonResponse
     {
         $header = $request->headers->get('Authorization');
+
+        // Apache sila configs la Authorization header ah PHP ku pass pannadhu —
+        // getallheaders() fallback (mod_php la idhu reliable ah kidaikkum)
+        if (!$header && function_exists('getallheaders')) {
+            foreach (getallheaders() as $name => $value) {
+                if (strtolower($name) === 'authorization') {
+                    $header = $value;
+                    break;
+                }
+            }
+        }
+        if (!$header && isset($_SERVER['REDIRECT_HTTP_AUTHORIZATION'])) {
+            $header = $_SERVER['REDIRECT_HTTP_AUTHORIZATION'];
+        }
+
         if (!$header || !str_starts_with($header, 'Bearer ')) {
             return new JsonResponse(['error' => 'Unauthorized'], JsonResponse::HTTP_UNAUTHORIZED);
         }
