@@ -33,6 +33,7 @@ class Router
             $r->addRoute('POST', '/auth/signup', [self::class, 'signup']);
             $r->addRoute('POST', '/auth/pin/login', [self::class, 'loginWithPin']);
             $r->addRoute('GET', '/auth/validate', [self::class, 'validateToken']);
+            $r->addRoute('GET', '/debug/selftest', [self::class, 'debugSelftest']);
             $r->addRoute('GET', '/profile', [self::class, 'profile']);
             $r->addRoute('GET', '/profile/stats', [self::class, 'profileStats']);
             $r->addRoute('GET', '/profile/farms', [self::class, 'profileFarms']);
@@ -94,7 +95,53 @@ class Router
 
         return new Response(json_encode(['valid' => true]), Response::HTTP_OK, ['Content-Type' => 'application/json']);
     }
+public static function debugSelftest(Request $request, array $vars): Response
+    {
+        $out = [];
+        try {
+            $db = \App\Config\Database::getConnection();
 
+            $out['php_now'] = date('Y-m-d H:i:s');
+            $out['db_now'] = $db->query('SELECT NOW() AS n')->fetch()['n'];
+
+            $col = $db->query("SHOW COLUMNS FROM sessions LIKE 'jwt_token'")->fetch();
+            $out['jwt_token_column_type'] = $col['Type'] ?? 'unknown';
+
+            $user = $db->query('SELECT id, role, is_active FROM users ORDER BY id LIMIT 1')->fetch();
+            $out['first_user'] = $user ?: 'NO USERS';
+
+            if ($user) {
+                $secret = $_ENV['JWT_SECRET'] ?? 'change_me_securely';
+                $now = time();
+                $jwt = \Firebase\JWT\JWT::encode([
+                    'sub' => (int) $user['id'],
+                    'phone' => 'selftest',
+                    'role' => $user['role'],
+                    'iat' => $now,
+                    'exp' => $now + 3600,
+                ], $secret, 'HS256');
+                $out['jwt_length'] = strlen($jwt);
+
+                $svc = new \App\Services\SessionService();
+                $svc->createSession((int) $user['id'], $jwt, date('Y-m-d H:i:s', $now + 3600), 'selftest-debug', '127.0.0.1');
+
+                $stmt = $db->prepare('SELECT CHAR_LENGTH(jwt_token) AS len, expires_at FROM sessions WHERE device_info = ? ORDER BY id DESC LIMIT 1');
+                $stmt->execute(['selftest-debug']);
+                $row = $stmt->fetch();
+                $out['stored_token_length'] = $row['len'] ?? null;
+                $out['stored_expires_at'] = $row['expires_at'] ?? null;
+
+                $found = $svc->getSessionByToken($jwt);
+                $out['lookup_after_insert'] = $found !== null ? 'FOUND' : 'NOT_FOUND';
+
+                $db->prepare("DELETE FROM sessions WHERE device_info = 'selftest-debug'")->execute();
+            }
+        } catch (\Throwable $e) {
+            $out['exception'] = $e->getMessage();
+        }
+
+        return new Response(json_encode($out, JSON_PRETTY_PRINT), 200, ['Content-Type' => 'application/json']);
+    }
     public static function login(Request $request, array $vars): Response
     {
         $controller = new AuthController();
