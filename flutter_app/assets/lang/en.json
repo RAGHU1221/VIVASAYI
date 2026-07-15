@@ -1,0 +1,57 @@
+{
+  "settings": {
+    "title": "Settings",
+    "language": "Language",
+    "app_lock": "App Lock",
+    "devices": "Devices",
+    "security_logs": "Security Logs",
+    "logout": "Logout"
+  },
+  "language": {
+    "title": "Language",
+    "english": "English",
+    "tamil": "Tamil"
+  },
+  "devices": {
+    "title": "Devices",
+    "empty_title": "No active sessions",
+    "empty_message": "You are not logged in on any other device.",
+    "current": "This device",
+    "revoke": "Revoke"
+  },
+  "security_logs": {
+    "title": "Security Logs",
+    "empty_title": "No activity yet",
+    "empty_message": "Your recent account activity will appear here."
+  },
+  "pin": {
+    "setup_title": "Set a PIN",
+    "enter_pin": "Enter a 4-6 digit PIN",
+    "confirm_pin": "Confirm PIN",
+    "mismatch": "PINs do not match",
+    "set_success": "PIN saved successfully",
+    "login_title": "Login with PIN",
+    "forgot": "Forgot PIN?"
+  },
+  "app_lock": {
+    "title": "Enter your PIN",
+    "use_biometric": "Use biometric",
+    "incorrect": "Incorrect PIN"
+  },
+  "forgot_pin": {
+    "title": "Reset PIN",
+    "verify_password": "Verify Password"
+  },
+  "disease_scanner": {
+    "title": "Disease Scanner",
+    "capture": "Take Photo",
+    "gallery": "Choose from Gallery",
+    "no_model": "On-device model not bundled yet — this is a placeholder result.",
+    "history": "Scan History"
+  },
+  "error": {
+    "title": "Something went wrong",
+    "message": "The page you were looking for could not be found.",
+    "retry": "Go to Dashboard"
+  }
+}

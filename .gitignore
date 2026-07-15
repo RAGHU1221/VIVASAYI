@@ -1,0 +1,34 @@
+# Flutter
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+build/
+.flutter-embedding/
+
+# Android
+flutter_app/android/.gradle/
+flutter_app/android/app/build/
+flutter_app/android/local.properties
+flutter_app/android/key.properties
+
+# iOS
+flutter_app/ios/Pods/
+flutter_app/ios/Runner.xcworkspace/
+
+# PHP
+php_api/vendor/
+php_api/.env
+php_api/.env.local
+php_api/.phpunit.result.cache
+
+# Admin Panel
+admin_panel/node_modules/
+admin_panel/dist/
+
+# General
+.DS_Store
+.env
+*.log
+*.sqlite
+*.db

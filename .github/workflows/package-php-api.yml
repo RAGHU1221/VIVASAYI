@@ -1,0 +1,31 @@
+name: Package PHP API for InfinityFree
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "php_api/**"
+  workflow_dispatch: {}
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.1"
+
+      - name: Install dependencies (production only)
+        working-directory: php_api
+        run: composer install --no-dev --optimize-autoloader
+
+      - name: Zip php_api (with vendor, no .env)
+        working-directory: php_api
+        run: zip -r ../php_api_infinityfree.zip . -x ".env" -x ".env.local"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: php_api_infinityfree
+          path: php_api_infinityfree.zip
