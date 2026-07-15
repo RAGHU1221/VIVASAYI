@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import '../../services/weather_service.dart';
 
 class WeatherScreen extends StatefulWidget {
@@ -12,6 +13,8 @@ class _WeatherScreenState extends State<WeatherScreen> {
   Map<String, dynamic>? _weather;
   String _district = WeatherService.defaultDistrict;
   bool _loading = true;
+  bool _locating = false;
+  bool _isGps = false;
   String? _error;
 
   @override
@@ -34,6 +37,7 @@ class _WeatherScreenState extends State<WeatherScreen> {
       setState(() {
         _weather = data;
         _district = data['district'] as String;
+        _isGps = false;
         _loading = false;
       });
     } catch (_) {
@@ -42,6 +46,61 @@ class _WeatherScreenState extends State<WeatherScreen> {
         _error = 'வானிலை தகவல் பெற முடியவில்லை. இணைய இணைப்பை சரிபார்க்கவும்.';
         _loading = false;
       });
+    }
+  }
+
+  Future<void> _loadByGps() async {
+    setState(() => _locating = true);
+    try {
+      var permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
+        if (!mounted) return;
+        setState(() => _locating = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('இருப்பிட அனுமதி தேவை. Settings-ல் அனுமதிக்கவும்.')),
+        );
+        return;
+      }
+
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        if (!mounted) return;
+        setState(() => _locating = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('GPS ஐ இயக்கவும்.')),
+        );
+        return;
+      }
+
+      final position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.low,
+          timeLimit: Duration(seconds: 20),
+        ),
+      );
+
+      final data = await WeatherService.instance
+          .fetchWeatherByCoords(position.latitude, position.longitude);
+      if (!mounted) return;
+      setState(() {
+        _weather = data;
+        _district = data['district'] as String;
+        _isGps = true;
+        _locating = false;
+        _error = null;
+        _loading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _locating = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('இருப்பிடம் பெற முடியவில்லை. மாவட்டத்தை தேர்வு செய்யவும்.')),
+      );
     }
   }
 
@@ -60,7 +119,22 @@ class _WeatherScreenState extends State<WeatherScreen> {
     final primary = Theme.of(context).colorScheme.primary;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('வானிலை')),
+      appBar: AppBar(
+        title: const Text('வானிலை'),
+        actions: [
+          IconButton(
+            icon: _locating
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : Icon(_isGps ? Icons.my_location : Icons.location_searching),
+            tooltip: 'என் இருப்பிடம்',
+            onPressed: _locating ? null : _loadByGps,
+          ),
+        ],
+      ),
       body: RefreshIndicator(
         onRefresh: () => _load(),
         child: _loading
@@ -116,7 +190,8 @@ class _WeatherScreenState extends State<WeatherScreen> {
         child: DropdownButton<String>(
           value: _district,
           isExpanded: true,
-          icon: const Icon(Icons.location_on),
+          icon: Icon(_isGps ? Icons.gps_fixed : Icons.location_on,
+              color: _isGps ? Colors.green : null),
           items: WeatherService.districts.keys
               .map((d) => DropdownMenuItem(value: d, child: Text(d)))
               .toList(),

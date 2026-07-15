@@ -53,7 +53,7 @@ class FinanceController
         }
 
         if ($month !== null && preg_match('/^\d{4}-\d{2}$/', $month)) {
-            $sql .= ' AND DATE_FORMAT(entry_date, "%Y-%m") = :month';
+            $sql .= ' AND DATE_FORMAT(entry_date, \'%Y-%m\') = :month';
             $params['month'] = $month;
         }
 
@@ -180,7 +180,7 @@ class FinanceController
         $stmt = $db->prepare(
             'SELECT type, COALESCE(SUM(amount), 0) AS total
              FROM transactions
-             WHERE user_id = :uid AND DATE_FORMAT(entry_date, "%Y-%m") = :month
+             WHERE user_id = :uid AND DATE_FORMAT(entry_date, \'%Y-%m\') = :month
              GROUP BY type'
         );
         $stmt->execute(['uid' => $userId, 'month' => $currentMonth]);
@@ -191,7 +191,7 @@ class FinanceController
 
         // Last 6 months trend (Phase 6 reports ku um useful)
         $stmt = $db->prepare(
-            'SELECT DATE_FORMAT(entry_date, "%Y-%m") AS ym, type, COALESCE(SUM(amount), 0) AS total
+            'SELECT DATE_FORMAT(entry_date, \'%Y-%m\') AS ym, type, COALESCE(SUM(amount), 0) AS total
              FROM transactions
              WHERE user_id = :uid AND entry_date >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)
              GROUP BY ym, type

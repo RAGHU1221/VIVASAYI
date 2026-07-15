@@ -540,18 +540,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
         Row(
           children: [
             Expanded(
-              child: _FeatureCard(
-                icon: Icons.campaign,
-                title: 'அரசு அறிவிப்புகள்',
-                subtitle: 'PM-KISAN 17வது தகவல்',
+              child: GestureDetector(
+                onTap: () => context.push('/schemes'),
+                child: _FeatureCard(
+                  icon: Icons.campaign,
+                  title: 'அரசு அறிவிப்புகள்',
+                  subtitle: 'PM-KISAN, மானியங்கள்...',
+                ),
               ),
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: _FeatureCard(
-                icon: Icons.shield,
-                title: 'பயிர் காப்பீடு',
-                subtitle: 'உங்கள் பயிரை பாதுகாக்கவும்',
+              child: GestureDetector(
+                onTap: () => context.push('/schemes'),
+                child: _FeatureCard(
+                  icon: Icons.shield,
+                  title: 'பயிர் காப்பீடு',
+                  subtitle: 'PMFBY திட்ட விவரம்',
+                ),
               ),
             ),
           ],

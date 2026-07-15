@@ -42,7 +42,7 @@ class DiaryController
         $params = ['uid' => $userId];
 
         if ($month !== null && preg_match('/^\d{4}-\d{2}$/', $month)) {
-            $sql .= ' AND DATE_FORMAT(entry_date, "%Y-%m") = :month';
+            $sql .= ' AND DATE_FORMAT(entry_date, \'%Y-%m\') = :month';
             $params['month'] = $month;
         }
 
@@ -156,8 +156,8 @@ class DiaryController
         }
 
         $note = trim($payload['note'] ?? '');
-        if ($note === '' || mb_strlen($note) > 5000) {
-            return 'Note is required (max 5000 chars)';
+        if (mb_strlen($note) > 5000) {
+            return 'Note too long (max 5000 chars)';
         }
 
         $date = $payload['entry_date'] ?? '';

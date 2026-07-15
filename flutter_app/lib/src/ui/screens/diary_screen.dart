@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import '../../services/diary_service.dart';
 
@@ -236,6 +237,7 @@ class _DiaryFormState extends State<_DiaryForm> {
   final TextEditingController _noteController = TextEditingController();
   DateTime _date = DateTime.now();
   bool _saving = false;
+  String? _formError;
 
   bool get _isEdit => widget.existing != null;
 
@@ -277,18 +279,15 @@ class _DiaryFormState extends State<_DiaryForm> {
 
   Future<void> _save() async {
     final note = _noteController.text.trim();
-    if (note.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('குறிப்பை எழுதவும்')),
-      );
-      return;
-    }
 
-    setState(() => _saving = true);
+    setState(() {
+      _saving = true;
+      _formError = null;
+    });
 
     final entry = {
       'activity': _activity,
-      'note': note,
+      'note': note.isEmpty ? _activity : note,
       'entry_date': _dateString,
     };
 
@@ -300,12 +299,21 @@ class _DiaryFormState extends State<_DiaryForm> {
       }
       if (!mounted) return;
       Navigator.pop(context, true);
+    } on DioException catch (e) {
+      if (!mounted) return;
+      String msg = 'சேமிக்க முடியவில்லை. இணைய இணைப்பை சரிபார்க்கவும்.';
+      final data = e.response?.data;
+      if (data is Map && data['error'] is String) msg = data['error'] as String;
+      setState(() {
+        _saving = false;
+        _formError = msg;
+      });
     } catch (_) {
       if (!mounted) return;
-      setState(() => _saving = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('சேமிக்க முடியவில்லை. மீண்டும் முயற்சிக்கவும்.')),
-      );
+      setState(() {
+        _saving = false;
+        _formError = 'சேமிக்க முடியவில்லை. மீண்டும் முயற்சிக்கவும்.';
+      });
     }
   }
 
@@ -385,6 +393,20 @@ class _DiaryFormState extends State<_DiaryForm> {
                 border: OutlineInputBorder(),
               ),
             ),
+            if (_formError != null)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Row(
+                  children: [
+                    const Icon(Icons.error_outline, color: Colors.red, size: 16),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(_formError!,
+                          style: const TextStyle(color: Colors.red, fontSize: 13)),
+                    ),
+                  ],
+                ),
+              ),
             const SizedBox(height: 8),
             SizedBox(
               width: double.infinity,

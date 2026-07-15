@@ -51,22 +51,30 @@ class _ReportsScreenState extends State<ReportsScreen> {
 
   Future<void> _load() async {
     setState(() => _loading = true);
+
+    // Rendu calls um independent — onnu fail aanalum
+    // mathadhu load aaganum
+    Map<String, dynamic>? summary;
+    List<Map<String, dynamic>>? transactions;
+
     try {
-      final results = await Future.wait([
-        _service.getSummary(),
-        _service.getTransactions(month: _monthKey),
-      ]);
-      if (!mounted) return;
-      setState(() {
-        _summary = results[0] as Map<String, dynamic>;
-        _transactions = results[1] as List<Map<String, dynamic>>;
-        _loading = false;
-      });
-    } catch (_) {
-      if (!mounted) return;
-      setState(() => _loading = false);
+      summary = await _service.getSummary();
+    } catch (_) {}
+
+    try {
+      transactions = await _service.getTransactions(month: _monthKey);
+    } catch (_) {}
+
+    if (!mounted) return;
+    setState(() {
+      if (summary != null) _summary = summary;
+      if (transactions != null) _transactions = transactions;
+      _loading = false;
+    });
+
+    if (summary == null && transactions == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('அறிக்கை தரவை ஏற்ற முடியவில்லை.')),
+        const SnackBar(content: Text('அறிக்கை தரவை ஏற்ற முடியவில்லை. மீண்டும் முயற்சிக்கவும்.')),
       );
     }
   }

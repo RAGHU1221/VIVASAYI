@@ -321,6 +321,7 @@ class _ListingFormState extends State<_ListingForm> {
   final _descriptionController = TextEditingController();
   String _category = _StoreScreenState.categories.first;
   bool _saving = false;
+  String? _formError;
 
   @override
   void dispose() {
@@ -338,14 +339,23 @@ class _ListingFormState extends State<_ListingForm> {
     final price = double.tryParse(_priceController.text.trim());
     final phone = _phoneController.text.trim();
 
-    if (title.isEmpty || price == null || price <= 0 || phone.length < 8) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('பெயர், விலை, தொலைபேசி எண் அவசியம்')),
-      );
+    if (title.isEmpty) {
+      setState(() => _formError = 'பொருள் பெயர் அவசியம்');
+      return;
+    }
+    if (price == null || price <= 0) {
+      setState(() => _formError = 'சரியான விலையை உள்ளிடவும்');
+      return;
+    }
+    if (phone.length < 8) {
+      setState(() => _formError = 'சரியான தொலைபேசி எண்ணை உள்ளிடவும்');
       return;
     }
 
-    setState(() => _saving = true);
+    setState(() {
+      _saving = true;
+      _formError = null;
+    });
     try {
       await ApiClient.instance.dio.post('/listings', data: {
         'title': title,
@@ -360,17 +370,19 @@ class _ListingFormState extends State<_ListingForm> {
       Navigator.pop(context, true);
     } on DioException catch (e) {
       if (!mounted) return;
-      setState(() => _saving = false);
-      String msg = 'சேமிக்க முடியவில்லை.';
+      String msg = 'சேமிக்க முடியவில்லை. இணைய இணைப்பை சரிபார்க்கவும்.';
       final data = e.response?.data;
       if (data is Map && data['error'] is String) msg = data['error'] as String;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+      setState(() {
+        _saving = false;
+        _formError = msg;
+      });
     } catch (_) {
       if (!mounted) return;
-      setState(() => _saving = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('சேமிக்க முடியவில்லை.')),
-      );
+      setState(() {
+        _saving = false;
+        _formError = 'சேமிக்க முடியவில்லை. மீண்டும் முயற்சிக்கவும்.';
+      });
     }
   }
 
@@ -478,6 +490,20 @@ class _ListingFormState extends State<_ListingForm> {
               'குறிப்பு: உங்கள் தொலைபேசி எண் விற்பனை பட்டியலில் மற்ற பயனர்களுக்கு தெரியும்.',
               style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
             ),
+            if (_formError != null)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Row(
+                  children: [
+                    const Icon(Icons.error_outline, color: Colors.red, size: 16),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(_formError!,
+                          style: const TextStyle(color: Colors.red, fontSize: 13)),
+                    ),
+                  ],
+                ),
+              ),
             const SizedBox(height: 12),
             SizedBox(
               width: double.infinity,
