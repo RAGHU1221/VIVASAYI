@@ -14,7 +14,7 @@ class AuthNotifier extends ChangeNotifier {
   static const _pinEnabledKey = 'pin_enabled';
 
   /// Unga backend validate endpoint — path different na maathunga
-  static const _validatePath = '/api/auth/validate';
+  static const _validatePath = '/auth/validate';
 
   String? _token;
   bool _initialized = false;
