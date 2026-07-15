@@ -24,7 +24,7 @@ if (flutterVersionName == null) {
 
 android {
     namespace "com.vivasayi.app"
-    compileSdk 35
+    compileSdk 36
     ndkVersion flutter.ndkVersion
 
     compileOptions {
@@ -44,7 +44,7 @@ android {
         applicationId "com.vivasayi.app"
         // local_auth (BiometricPrompt) and camera require API 23+
         minSdkVersion 23
-        targetSdkVersion 35
+        targetSdkVersion 36
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
     }
