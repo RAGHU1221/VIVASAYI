@@ -34,9 +34,12 @@ class SessionService
     public function getSessionByToken(string $jwtToken): ?array
     {
         $stmt = Database::getConnection()->prepare(
-            'SELECT * FROM sessions WHERE jwt_token = :jwt_token AND is_revoked = 0 AND expires_at > NOW() LIMIT 1'
+            'SELECT * FROM sessions WHERE jwt_token = :jwt_token AND is_revoked = 0 AND expires_at > :now LIMIT 1'
         );
-        $stmt->execute(['jwt_token' => $jwtToken]);
+        // MUKKIYAM: DB server NOW() use pannadha — DB timezone PHP timezone
+        // kooda match aagala na session udane "expired" aagidum (instant logout bug).
+        // expires_at PHP date() la dhan ezhudhinom, so PHP clock la dhan compare pannanum.
+        $stmt->execute(['jwt_token' => $jwtToken, 'now' => date('Y-m-d H:i:s')]);
         $data = $stmt->fetch(PDO::FETCH_ASSOC);
         return $data ?: null;
     }
@@ -44,9 +47,9 @@ class SessionService
     public function getActiveSessionsForUser(int $userId): array
     {
         $stmt = Database::getConnection()->prepare(
-            'SELECT * FROM sessions WHERE user_id = :user_id AND is_revoked = 0 AND expires_at > NOW() ORDER BY created_at DESC'
+            'SELECT * FROM sessions WHERE user_id = :user_id AND is_revoked = 0 AND expires_at > :now ORDER BY created_at DESC'
         );
-        $stmt->execute(['user_id' => $userId]);
+        $stmt->execute(['user_id' => $userId, 'now' => date('Y-m-d H:i:s')]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
