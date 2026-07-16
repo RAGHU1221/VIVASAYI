@@ -49,10 +49,21 @@ android {
         versionName flutterVersionName
     }
 
+    signingConfigs {
+        release {
+            // Fixed keystore repo la commit pannirukkom — GitHub Actions
+            // ovvoru build kum SAME signature varum, adhanala update install
+            // "App not installed" error varadhu (CSC APK la vandha adhe fix).
+            storeFile file("vivasayi-release.keystore")
+            storePassword "vivasayi2026"
+            keyAlias "vivasayi"
+            keyPassword "vivasayi2026"
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: replace with a real release signing config before publishing.
-            signingConfig signingConfigs.debug
+            signingConfig signingConfigs.release
             minifyEnabled false
             shrinkResources false
         }
