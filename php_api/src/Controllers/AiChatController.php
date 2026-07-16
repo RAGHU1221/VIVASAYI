@@ -8,19 +8,28 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 
 /**
- * AI Chat controller — OpenAI-compatible Chat Completions API (Colibri AI).
+ * AI Chat controller — NVIDIA Build (integrate.api.nvidia.com), OpenAI-compatible.
  *
  * Configuration (Render env variables):
- *   AI_BASE_URL  — Colibri server base URL (e.g. https://your-colibri-server.com)
- *   AI_API_KEY   — Bearer API key
- *   AI_MODEL     — model name (default: glm-5.2-colibri)
+ *   AI_API_KEY  — NVIDIA API key from build.nvidia.com (starts with "nvapi-")
+ *   AI_BASE_URL — optional override; defaults to https://integrate.api.nvidia.com/v1
+ *   AI_MODEL    — model id from the NVIDIA catalog
+ *                 (default: sarvamai/sarvam-m — trained on Tamil + 10 other Indic
+ *                 languages, +20% better than its base model on Indic-language
+ *                 benchmarks. Best default for a Tamil farming assistant.)
+ *                 Other options on build.nvidia.com: "meta/llama-3.1-70b-instruct",
+ *                 "qwen/qwen3.5-397b-a17b", "z-ai/glm-5.2" (general multilingual,
+ *                 not Tamil-tuned specifically).
  *
- * Endpoint called: POST {AI_BASE_URL}/v1/chat/completions
+ * Endpoint called: POST {AI_BASE_URL}/chat/completions
+ * Auth: Authorization: Bearer {AI_API_KEY}   (standard OpenAI Bearer format)
  * Response parsed: choices[0].message.content
  * Automatically retries once on network/server failure.
  */
 class AiChatController
 {
+    private const DEFAULT_BASE_URL = 'https://integrate.api.nvidia.com/v1';
+
     private const SYSTEM_PROMPT = 'நீங்கள் "விவசாயி AI உதவியாளர்" - தமிழ்நாடு விவசாயிகளுக்கான நட்பான AI உதவியாளர். '
         . 'பயிர் சாகுபடி, நோய் கட்டுப்பாடு, உரம், நீர் மேலாண்மை, மண் வளம், அரசு திட்டங்கள், '
         . 'சந்தை விலை போன்ற விவசாய கேள்விகளுக்கு எளிய தமிழில் நடைமுறை பதில்கள் கொடுங்கள். '
@@ -55,8 +64,8 @@ class AiChatController
         }
 
         $apiKey = $_ENV['AI_API_KEY'] ?? '';
-        $baseUrl = rtrim($_ENV['AI_BASE_URL'] ?? '', '/');
-        if ($apiKey === '' || $baseUrl === '') {
+        $baseUrl = rtrim($_ENV['AI_BASE_URL'] ?? self::DEFAULT_BASE_URL, '/');
+        if ($apiKey === '') {
             return new JsonResponse(['error' => 'AI சேவை இன்னும் அமைக்கப்படவில்லை'], 503);
         }
 
@@ -83,7 +92,7 @@ class AiChatController
         $stmt->execute(['uid' => $userId]);
         $history = array_reverse($stmt->fetchAll());
 
-        // OpenAI Chat Completions format: system prompt as first message
+        // OpenAI-compatible format: system prompt is the first message in the array
         $messages = [['role' => 'system', 'content' => self::SYSTEM_PROMPT]];
         foreach ($history as $row) {
             $messages[] = ['role' => $row['role'], 'content' => $row['message']];
@@ -133,21 +142,22 @@ class AiChatController
     }
 
     /**
-     * Calls the OpenAI-compatible Chat Completions endpoint.
+     * Calls NVIDIA Build's OpenAI-compatible Chat Completions endpoint.
      * Retries once automatically on failure (network error, 5xx, bad response).
      */
     private function callChatCompletions(string $baseUrl, string $apiKey, array $messages): ?string
     {
-        $model = $_ENV['AI_MODEL'] ?? 'glm-5.2-colibri';
+        $model = $_ENV['AI_MODEL'] ?? 'sarvamai/sarvam-m';
 
         $body = json_encode([
             'model' => $model,
             'messages' => $messages,
             'max_tokens' => 1024,
+            'temperature' => 0.5,
         ], JSON_UNESCAPED_UNICODE);
 
         for ($attempt = 1; $attempt <= self::MAX_ATTEMPTS; $attempt++) {
-            $reply = $this->requestOnce($baseUrl . '/v1/chat/completions', $apiKey, $body);
+            $reply = $this->requestOnce($baseUrl . '/chat/completions', $apiKey, $body);
             if ($reply !== null) {
                 return $reply;
             }
@@ -170,6 +180,8 @@ class AiChatController
             CURLOPT_CONNECTTIMEOUT => 10,
             CURLOPT_HTTPHEADER => [
                 'Content-Type: application/json',
+                // NVIDIA Build uses the standard OpenAI Bearer format
+                // (nvapi-... key), not a custom header.
                 'Authorization: Bearer ' . $apiKey,
             ],
         ]);
@@ -187,7 +199,7 @@ class AiChatController
 
         $data = json_decode($response, true);
 
-        // OpenAI Chat Completions response: choices[0].message.content
+        // OpenAI-compatible response: choices[0].message.content
         if (!is_array($data) || !isset($data['choices'][0]['message']['content'])) {
             error_log('AI API unexpected response: ' . substr($response, 0, 500));
             return null;
