@@ -73,15 +73,12 @@ class _LoginScreenState extends State<LoginScreen> {
     }
     final data = error.response?.data;
     if (data is Map<String, dynamic>) {
-      // APP_DEBUG=true irundha 'message' field la exact PHP exception
-      // varum — adha priority ah kaattanum debug pண்ணும்போது.
       if (data['message'] != null) {
         return data['message'].toString();
       }
       if (data['error'] != null) {
         return data['error'].toString();
-      } 
-    } 
+      }
     }
     return fallback;
   }
