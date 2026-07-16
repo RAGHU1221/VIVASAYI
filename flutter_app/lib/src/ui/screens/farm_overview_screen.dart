@@ -95,6 +95,10 @@ class _FarmOverviewScreenState extends State<FarmOverviewScreen> {
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.background,
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.canPop() ? context.pop() : context.go('/dashboard'),
+        ),
         title: const Text('பயிர் நிலை'),
         actions: [
           IconButton(
