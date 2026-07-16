@@ -329,8 +329,11 @@ class CropController
                 $args['water'] = $f['water'];
             }
             if ($f['dur'] !== '') {
-                // duration stored as "110" or "130-135" — compare leading number
-                $sql .= ' AND CAST(SUBSTRING_INDEX(duration, "-", 1) AS UNSIGNED) <= :dur';
+                // duration stored as "110" or "130-135" — compare leading number.
+                // NOTE: must use single-quoted '-' — Aiven MySQL runs with
+                // ANSI_QUOTES in sql_mode, where double-quoted "-" is parsed
+                // as a column identifier (caused "Unknown column '-'" error).
+                $sql .= " AND CAST(SUBSTRING_INDEX(duration, '-', 1) AS UNSIGNED) <= :dur";
                 $args['dur'] = (int) $f['dur'];
             }
 
