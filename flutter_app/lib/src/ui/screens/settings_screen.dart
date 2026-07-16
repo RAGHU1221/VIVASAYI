@@ -15,7 +15,13 @@ class SettingsScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.background,
-      appBar: AppBar(title: Text(Translations.t(locale, 'settings.title'))),
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.canPop() ? context.pop() : context.go('/dashboard'),
+        ),
+        title: Text(Translations.t(locale, 'settings.title')),
+      ),
       body: ListView(
         children: [
           ListTile(
