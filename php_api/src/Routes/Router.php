@@ -37,6 +37,7 @@ class Router
         $dispatcher = simpleDispatcher(function (RouteCollector $r) {
             $r->addRoute('GET', '/health', [self::class, 'health']);
             $r->addRoute('POST', '/auth/login', [self::class, 'login']);
+            $r->addRoute('GET', '/debug/login-test', [self::class, 'debugLoginTest']);
             $r->addRoute('POST', '/auth/signup', [self::class, 'signup']);
             $r->addRoute('POST', '/auth/pin/login', [self::class, 'loginWithPin']);
             $r->addRoute('GET', '/auth/validate', [self::class, 'validateToken']);
@@ -443,7 +444,7 @@ class Router
         $controller = new AuthController();
         return $controller->login($request);
     }
-
+$r->addRoute('GET', '/debug/login-test', [self::class, 'debugLoginTest']);
     public static function signup(Request $request, array $vars): Response
     {
         $controller = new AuthController();
