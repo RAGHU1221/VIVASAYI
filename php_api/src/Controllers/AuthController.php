@@ -30,7 +30,22 @@ class AuthController
 
     public function login(Request $request): JsonResponse
     {
-        $payload = json_decode($request->getContent(), true);
+        try {
+            return $this->loginInner($request);
+        } catch (\Throwable $e) {
+            error_log('LOGIN EXCEPTION: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
+            // MUKKIYAM: idhu TEMPORARY debug ah — production ku podhu
+            // remove pannanum (raw exception message expose pannadhu).
+            return new JsonResponse([
+                'error' => 'Server error',
+                'debug_message' => $e->getMessage(),
+                'debug_file' => basename($e->getFile()) . ':' . $e->getLine(),
+            ], 500);
+        }
+    }
+
+    private function loginInner(Request $request): JsonResponse
+    {yload = json_decode($request->getContent(), true);
 
         if (!is_array($payload)) {
             return new JsonResponse(['error' => 'Invalid request body'], 400);
