@@ -86,7 +86,15 @@ class _PinSetupScreenState extends State<PinSetupScreen> {
     final locale = LocaleNotifier.instance.locale?.languageCode ?? 'en';
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.background,
-      appBar: AppBar(title: Text(Translations.t(locale, 'pin.setup_title'))),
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.canPop()
+              ? context.pop()
+              : context.go(widget.fromForgotPin ? '/login-pin' : '/settings'),
+        ),
+        title: Text(Translations.t(locale, 'pin.setup_title')),
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
