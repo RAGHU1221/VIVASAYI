@@ -606,9 +606,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Wrap(
-          spacing: 12,
-          runSpacing: 12,
+        child: GridView.count(
+          crossAxisCount: 4,
+          crossAxisSpacing: 8,
+          mainAxisSpacing: 16,
+          childAspectRatio: 0.75,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
           children: actions,
         ),
       ),
@@ -821,9 +825,8 @@ class _ActionItem extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(16),
-      child: SizedBox(
-      width: (MediaQuery.of(context).size.width - 72) / 4,
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
           Container(
             decoration: BoxDecoration(
@@ -834,9 +837,16 @@ class _ActionItem extends StatelessWidget {
             child: Icon(icon, color: Colors.green.shade700, size: 24),
           ),
           const SizedBox(height: 8),
-          Text(label, textAlign: TextAlign.center, style: const TextStyle(fontSize: 12)),
+          Flexible(
+            child: Text(
+              label,
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontSize: 11),
+            ),
+          ),
         ],
-      ),
       ),
     );
   }
