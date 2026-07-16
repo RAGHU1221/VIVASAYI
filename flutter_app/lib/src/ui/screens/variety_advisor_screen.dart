@@ -11,7 +11,17 @@ class VarietyAdvisorScreen extends StatefulWidget {
 }
 
 class _VarietyAdvisorScreenState extends State<VarietyAdvisorScreen> {
-  final TextEditingController _districtController = TextEditingController();
+  static const List<String> _districts = [
+    'அரியலூர்', 'சென்னை', 'கோயம்புத்தூர்', 'கடலூர்', 'தர்மபுரி', 'திண்டுக்கல்',
+    'ஈரோடு', 'காஞ்சிபுரம்', 'கன்னியாகுமரி', 'கரூர்', 'கிருஷ்ணகிரி', 'மதுரை',
+    'நாகப்பட்டினம்', 'நாமக்கல்', 'நீலகிரி', 'பெரம்பலூர்', 'புதுக்கோட்டை',
+    'இராமநாதபுரம்', 'சேலம்', 'சிவகங்கை', 'தஞ்சாவூர்', 'தேனி', 'தூத்துக்குடி',
+    'திருச்சிராப்பள்ளி', 'திருநெல்வேலி', 'திருப்பூர்', 'திருவள்ளூர்',
+    'திருவண்ணாமலை', 'திருவாரூர்', 'வேலூர்', 'விழுப்புரம்', 'விருதுநகர்',
+    'செங்கல்பட்டு', 'கள்ளக்குறிச்சி', 'மயிலாடுதுறை', 'ராணிப்பேட்டை',
+    'தென்காசி', 'திருப்பத்தூர்',
+  ];
+  String? _district;
 
   static const List<String> _seasons = ['குறுவை', 'சம்பா', 'தாளடி', 'நவரை', 'சொர்ணவாரி'];
   static const List<String> _months = [
@@ -37,12 +47,6 @@ class _VarietyAdvisorScreenState extends State<VarietyAdvisorScreen> {
   List<Map<String, dynamic>> _varieties = [];
   List<String> _relaxed = [];
 
-  @override
-  void dispose() {
-    _districtController.dispose();
-    super.dispose();
-  }
-
   Future<void> _getAdvice() async {
     if (_season == null) {
       setState(() => _error = 'பருவத்தை தேர்ந்தெடுக்கவும்');
@@ -58,7 +62,7 @@ class _VarietyAdvisorScreenState extends State<VarietyAdvisorScreen> {
     try {
       final response = await ApiClient.instance.dio.post('/crops/advisor', data: {
         'crop_id': 1,
-        'district': _districtController.text.trim(),
+        'district': _district ?? '',
         'season': _season,
         'month': _month ?? '',
         'soil_type': _soil ?? '',
@@ -102,14 +106,8 @@ class _VarietyAdvisorScreenState extends State<VarietyAdvisorScreen> {
                   const Text('உங்கள் விவரங்கள்',
                       style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 12),
-                  TextField(
-                    controller: _districtController,
-                    decoration: const InputDecoration(
-                      labelText: 'மாவட்டம்',
-                      prefixIcon: Icon(Icons.location_on_outlined),
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
+                  _dropdown('மாவட்டம்', Icons.location_on_outlined, _districts, _district,
+                      (v) => setState(() => _district = v)),
                   const SizedBox(height: 12),
                   _dropdown('பருவம் *', Icons.calendar_month, _seasons, _season,
                       (v) => setState(() => _season = v)),
