@@ -280,16 +280,31 @@ class Router
 
         public static function cropsIndex(Request $request, array $vars): Response
     {
+        $authResponse = self::authorize($request, ['admin', 'user']);
+        if ($authResponse !== null) {
+            return $authResponse;
+        }
+
         return (new CropController())->crops($request);
     }
 
     public static function cropVarieties(Request $request, array $vars): Response
     {
+        $authResponse = self::authorize($request, ['admin', 'user']);
+        if ($authResponse !== null) {
+            return $authResponse;
+        }
+
         return (new CropController())->varieties($request, $vars);
     }
 
     public static function cropAdvisor(Request $request, array $vars): Response
     {
+        $authResponse = self::authorize($request, ['admin', 'user']);
+        if ($authResponse !== null) {
+            return $authResponse;
+        }
+
         return (new CropController())->advisor($request);
     }
 
