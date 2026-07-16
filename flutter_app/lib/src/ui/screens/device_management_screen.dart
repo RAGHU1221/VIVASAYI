@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../../services/auth_service.dart';
 import '../../services/locale_notifier.dart';
 import '../../services/translations.dart';
@@ -62,7 +63,13 @@ class _DeviceManagementScreenState extends State<DeviceManagementScreen> {
 
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.background,
-      appBar: AppBar(title: Text(Translations.t(locale, 'devices.title'))),
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.canPop() ? context.pop() : context.go('/settings'),
+        ),
+        title: Text(Translations.t(locale, 'devices.title')),
+      ),
       body: _isLoading
           ? const SkeletonList()
           : _errorMessage != null
