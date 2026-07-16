@@ -15,6 +15,7 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   final AuthService _authService = AuthService();
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   String? _welcomeText;
   List<Map<String, dynamic>> _farms = [];
   bool _isFarmsLoading = true;
@@ -159,6 +160,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final onPrimary = theme.colorScheme.onPrimary;
 
     return Scaffold(
+      key: _scaffoldKey,
+      drawer: _buildDrawer(context),
       backgroundColor: theme.colorScheme.background,
       body: SafeArea(
         child: Column(
@@ -195,10 +198,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildHeader(BuildContext context, Color primary, Color onPrimary) {
+    final notifCount = _buildNotifications().length;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        _CircleIconButton(icon: Icons.menu, onPressed: () {}),
+        _CircleIconButton(
+          icon: Icons.menu,
+          onPressed: () => _scaffoldKey.currentState?.openDrawer(),
+        ),
         const SizedBox(width: 12),
         Expanded(
           child: Column(
@@ -212,16 +219,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
         Stack(
           children: [
-            IconButton(onPressed: () {}, icon: const Icon(Icons.notifications_none)),
-            Positioned(
-              right: 8,
-              top: 8,
-              child: CircleAvatar(
-                radius: 8,
-                backgroundColor: Colors.red,
-                child: const Text('5', style: TextStyle(fontSize: 10, color: Colors.white)),
-              ),
+            IconButton(
+              onPressed: () => _showNotifications(context),
+              icon: const Icon(Icons.notifications_none),
             ),
+            if (notifCount > 0)
+              Positioned(
+                right: 8,
+                top: 8,
+                child: CircleAvatar(
+                  radius: 8,
+                  backgroundColor: Colors.red,
+                  child: Text('$notifCount', style: const TextStyle(fontSize: 10, color: Colors.white)),
+                ),
+              ),
           ],
         ),
         const SizedBox(width: 8),
@@ -280,12 +291,175 @@ class _DashboardScreenState extends State<DashboardScreen> {
           },
         ),
         const SizedBox(width: 12),
-        CircleAvatar(
-          radius: 18,
-          backgroundColor: Colors.green.shade100,
-          child: Icon(Icons.person, color: Colors.green.shade700),
+        GestureDetector(
+          onTap: () => context.push('/profile'),
+          child: CircleAvatar(
+            radius: 18,
+            backgroundColor: Colors.green.shade100,
+            child: Icon(Icons.person, color: Colors.green.shade700),
+          ),
         ),
       ],
+    );
+  }
+
+  Widget _buildDrawer(BuildContext context) {
+    final primary = Theme.of(context).colorScheme.primary;
+
+    Widget item(IconData icon, String label, String route, {Object? extra}) {
+      return ListTile(
+        leading: Icon(icon, color: primary),
+        title: Text(label),
+        dense: true,
+        onTap: () {
+          Navigator.of(context).pop(); // drawer close
+          context.push(route, extra: extra);
+        },
+      );
+    }
+
+    return Drawer(
+      child: SafeArea(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            DrawerHeader(
+              decoration: BoxDecoration(color: primary),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  const Text('விவசாயி',
+                      style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 4),
+                  Text(_welcomeText ?? '',
+                      style: const TextStyle(color: Colors.white70, fontSize: 13)),
+                ],
+              ),
+            ),
+            item(Icons.scatter_plot, 'பயிர் மேலாண்மை', '/home'),
+            item(Icons.camera_alt, 'நோய் கண்டறிதல்', '/disease-scanner'),
+            item(Icons.book, 'நாள் குறிப்பு', '/diary'),
+            item(Icons.currency_rupee, 'வரவு-செலவு', '/finance'),
+            item(Icons.cloud, 'வானிலை', '/weather'),
+            item(Icons.local_offer, 'மார்க்கெட் விலை', '/market-prices'),
+            item(Icons.flag, 'அரசு திட்டங்கள்', '/schemes'),
+            item(Icons.bar_chart, 'அறிக்கைகள்', '/reports'),
+            item(Icons.mic, 'AI உதவியாளர்', '/ai-chat'),
+            item(Icons.group, 'சமூகங்கள்', '/community'),
+            item(Icons.store, 'கடை', '/store'),
+            const Divider(),
+            item(Icons.person, 'சுயவிவரம்', '/profile'),
+            item(Icons.settings, 'அமைப்புகள்', '/settings'),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Weather + farms data la irundhu local notifications build pannum.
+  /// Backend notifications API vandha idha replace pannalam.
+  List<Map<String, dynamic>> _buildNotifications() {
+    final items = <Map<String, dynamic>>[];
+
+    if (_weather != null) {
+      final daily = _weather!['daily'] as List;
+      for (final d in daily.take(3)) {
+        final chance = d['rain_chance'] as int;
+        if (chance >= 60) {
+          items.add({
+            'icon': Icons.umbrella,
+            'color': Colors.blue,
+            'title': 'மழை எச்சரிக்கை',
+            'body':
+                '${WeatherService.dayName(d['date'] as DateTime)} மழைக்கு $chance% வாய்ப்பு — தெளிப்பு/உரமிடுதல் தவிர்க்கவும்',
+            'route': '/weather',
+          });
+          break;
+        }
+      }
+      final temp = _weather!['temp'] as double;
+      if (temp >= 36) {
+        items.add({
+          'icon': Icons.wb_sunny,
+          'color': Colors.orange,
+          'title': 'வெப்ப எச்சரிக்கை',
+          'body': 'இன்று ${temp.round()}°C — பயிர்களுக்கு காலை/மாலை நீர்ப்பாசனம் செய்யவும்',
+          'route': '/weather',
+        });
+      }
+    }
+
+    if (!_isFarmsLoading && _farms.isEmpty) {
+      items.add({
+        'icon': Icons.add_location_alt,
+        'color': Colors.green,
+        'title': 'நிலம் சேர்க்கவும்',
+        'body': 'உங்கள் முதல் நிலத்தை பதிவு செய்து பயிர் மேலாண்மையை தொடங்குங்கள்',
+        'route': '/farm-form',
+      });
+    }
+
+    items.add({
+      'icon': Icons.flag,
+      'color': Colors.teal,
+      'title': 'அரசு திட்டங்கள்',
+      'body': 'விவசாயிகளுக்கான புதிய திட்டங்களை பார்க்கவும்',
+      'route': '/schemes',
+    });
+
+    return items;
+  }
+
+  void _showNotifications(BuildContext context) {
+    final items = _buildNotifications();
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Padding(
+              padding: EdgeInsets.all(16),
+              child: Text('அறிவிப்புகள்',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            ),
+            if (items.isEmpty)
+              const Padding(
+                padding: EdgeInsets.only(bottom: 32),
+                child: Text('புதிய அறிவிப்புகள் இல்லை'),
+              )
+            else
+              Flexible(
+                child: ListView.separated(
+                  shrinkWrap: true,
+                  itemCount: items.length,
+                  separatorBuilder: (_, __) => const Divider(height: 1),
+                  itemBuilder: (_, i) {
+                    final n = items[i];
+                    return ListTile(
+                      leading: CircleAvatar(
+                        backgroundColor: (n['color'] as Color).withOpacity(0.15),
+                        child: Icon(n['icon'] as IconData, color: n['color'] as Color, size: 20),
+                      ),
+                      title: Text(n['title'] as String,
+                          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                      subtitle: Text(n['body'] as String, style: const TextStyle(fontSize: 12)),
+                      onTap: () {
+                        Navigator.of(ctx).pop();
+                        context.push(n['route'] as String);
+                      },
+                    );
+                  },
+                ),
+              ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
     );
   }
 
@@ -311,7 +485,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 Text('வளமான தமிழ்நாடு உருவாக்குவோம்', style: TextStyle(color: onPrimary.withOpacity(0.9), fontSize: 14)),
                 const SizedBox(height: 16),
                 ElevatedButton(
-                  onPressed: () {},
+                  onPressed: () => context.push('/schemes'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.white,
                     foregroundColor: primary,
@@ -462,7 +636,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ),
           TextButton(
-            onPressed: () {},
+            onPressed: () => context.push('/disease-scanner'),
             child: const Text('அனைத்தும் பார்க்க'),
           ),
         ],
@@ -478,7 +652,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             const Text('என் பயிர்கள்', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            TextButton(onPressed: () {}, child: const Text('அனைத்தும் பார்க்க')),
+            TextButton(onPressed: () => context.go('/home'), child: const Text('அனைத்தும் பார்க்க')),
           ],
         ),
         if (_isFarmsLoading)
