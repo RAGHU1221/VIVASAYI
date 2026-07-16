@@ -339,6 +339,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
             item(Icons.scatter_plot, 'பயிர் மேலாண்மை', '/home'),
             item(Icons.camera_alt, 'நோய் கண்டறிதல்', '/disease-scanner'),
+            item(Icons.psychology, 'நெல் ரக ஆலோசகர்', '/variety-advisor'),
             item(Icons.book, 'நாள் குறிப்பு', '/diary'),
             item(Icons.currency_rupee, 'வரவு-செலவு', '/finance'),
             item(Icons.cloud, 'வானிலை', '/weather'),
