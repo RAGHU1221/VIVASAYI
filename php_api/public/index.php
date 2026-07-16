@@ -38,6 +38,10 @@ $debug = filter_var($_ENV['APP_DEBUG'] ?? false, FILTER_VALIDATE_BOOLEAN);
 try {
     $response = $dispatcher->dispatch();
 } catch (Throwable $error) {
+    // Munnadi login() endpoint mattum error_log pannuchu — ippo EVERY route
+    // exception-um Render logs la varum, so future debugging fast aagum.
+    error_log('UNCAUGHT EXCEPTION: ' . $error->getMessage() . ' at ' . $error->getFile() . ':' . $error->getLine());
+
     $payload = ['error' => 'Internal Server Error'];
     if ($debug) {
         $payload['message'] = $error->getMessage();
