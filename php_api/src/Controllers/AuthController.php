@@ -186,6 +186,61 @@ class AuthController
         return new JsonResponse(['profile' => $user->toArray()]);
     }
 
+    public function updateProfile(Request $request): JsonResponse
+    {
+        $payload = $request->attributes->get('jwt_payload', []);
+        $userId = isset($payload['sub']) ? (int) $payload['sub'] : null;
+
+        if ($userId === null) {
+            return new JsonResponse(['error' => 'Unauthorized'], 401);
+        }
+
+        $body = json_decode($request->getContent(), true);
+        if (!is_array($body)) {
+            return new JsonResponse(['error' => 'Invalid request body'], 400);
+        }
+
+        $db = \App\Config\Database::getConnection();
+        $fields = [];
+        $args = ['id' => $userId];
+
+        if (array_key_exists('email', $body)) {
+            $email = trim((string) $body['email']);
+            if ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                return new JsonResponse(['error' => 'மின்னஞ்சல் முறையற்றது'], 400);
+            }
+            if ($email !== '') {
+                $dup = $db->prepare('SELECT id FROM users WHERE email = :email AND id != :id LIMIT 1');
+                $dup->execute(['email' => $email, 'id' => $userId]);
+                if ($dup->fetchColumn() !== false) {
+                    return new JsonResponse(['error' => 'இந்த மின்னஞ்சல் ஏற்கனவே பயன்பாட்டில் உள்ளது'], 409);
+                }
+            }
+            $fields[] = 'email = :email';
+            $args['email'] = $email === '' ? null : $email;
+        }
+
+        if (array_key_exists('name', $body)) {
+            $name = trim((string) $body['name']);
+            if ($name === '') {
+                return new JsonResponse(['error' => 'பெயர் காலியாக இருக்கக்கூடாது'], 400);
+            }
+            $fields[] = 'name = :name';
+            $args['name'] = $name;
+        }
+
+        if (count($fields) === 0) {
+            return new JsonResponse(['error' => 'புதுப்பிக்க எதுவும் இல்லை'], 400);
+        }
+
+        $stmt = $db->prepare('UPDATE users SET ' . implode(', ', $fields) . ' WHERE id = :id');
+        $stmt->execute($args);
+
+        $user = $this->userService->getById($userId);
+
+        return new JsonResponse(['profile' => $user->toArray(), 'message' => 'சுயவிவரம் புதுப்பிக்கப்பட்டது']);
+    }
+
     public function profileFarms(Request $request): JsonResponse
     {
         $payload = $request->attributes->get('jwt_payload', []);
