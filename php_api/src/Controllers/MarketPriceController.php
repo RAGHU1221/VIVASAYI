@@ -9,14 +9,50 @@ use Symfony\Component\HttpFoundation\Request;
 
 class MarketPriceController
 {
-    /** data.gov.in — Current Daily Price of Various Commodities (Agmarknet) */
     private const RESOURCE_URL = 'https://api.data.gov.in/resource/9ef84268-d588-465a-a308-a864a43d0070';
+    private const STATE_NAME = 'Tamil Nadu';
+    private const PAGE_LIMIT = 500;
+    private const MAX_PAGES = 20;
 
-    private const ALLOWED_DISTRICTS = [
-        'Chengalpattu', 'Chennai', 'Coimbatore', 'Cuddalore', 'Dindigul',
-        'Erode', 'Kancheepuram', 'Karur', 'Madurai', 'Nagapattinam',
-        'Namakkal', 'Salem', 'Thanjavur', 'Theni', 'Tirunelveli',
-        'Tiruppur', 'Trichy', 'Vellore', 'Villupuram', 'Virudhunagar',
+    private const DISTRICTS = [
+        'அரியலூர்' => ['Ariyalur'],
+        'சென்னை' => ['Chennai'],
+        'கோயம்புத்தூர்' => ['Coimbatore'],
+        'கடலூர்' => ['Cuddalore'],
+        'தர்மபுரி' => ['Dharmapuri'],
+        'திண்டுக்கல்' => ['Dindigul'],
+        'ஈரோடு' => ['Erode'],
+        'காஞ்சிபுரம்' => ['Kancheepuram', 'Kanchipuram'],
+        'கன்னியாகுமரி' => ['Kanyakumari', 'Kanniyakumari'],
+        'கரூர்' => ['Karur'],
+        'கிருஷ்ணகிரி' => ['Krishnagiri'],
+        'மதுரை' => ['Madurai'],
+        'நாகப்பட்டினம்' => ['Nagapattinam'],
+        'நாமக்கல்' => ['Namakkal'],
+        'நீலகிரி' => ['Nilgiris', 'The Nilgiris', 'Udhagamandalam'],
+        'பெரம்பலூர்' => ['Perambalur'],
+        'புதுக்கோட்டை' => ['Pudukkottai'],
+        'இராமநாதபுரம்' => ['Ramanathapuram'],
+        'சேலம்' => ['Salem'],
+        'சிவகங்கை' => ['Sivaganga', 'Sivagangai'],
+        'தஞ்சாவூர்' => ['Thanjavur'],
+        'தேனி' => ['Theni'],
+        'தூத்துக்குடி' => ['Thoothukudi', 'Tuticorin'],
+        'திருச்சிராப்பள்ளி' => ['Tiruchirappalli', 'Trichy', 'Tiruchirapalli'],
+        'திருநெல்வேலி' => ['Tirunelveli'],
+        'திருப்பூர்' => ['Tiruppur', 'Tirupur'],
+        'திருவள்ளூர்' => ['Tiruvallur', 'Thiruvallur'],
+        'திருவண்ணாமலை' => ['Tiruvannamalai'],
+        'திருவாரூர்' => ['Tiruvarur', 'Thiruvarur'],
+        'வேலூர்' => ['Vellore'],
+        'விழுப்புரம்' => ['Villupuram', 'Viluppuram'],
+        'விருதுநகர்' => ['Virudhunagar'],
+        'செங்கல்பட்டு' => ['Chengalpattu', 'Chengalpet'],
+        'கள்ளக்குறிச்சி' => ['Kallakurichi', 'Villupuram', 'Viluppuram'],
+        'மயிலாடுதுறை' => ['Mayiladuthurai', 'Nagapattinam'],
+        'ராணிப்பேட்டை' => ['Ranipet', 'Vellore'],
+        'தென்காசி' => ['Tenkasi', 'Tirunelveli'],
+        'திருப்பத்தூர்' => ['Tirupattur', 'Vellore'],
     ];
 
     private function ensureTable(): void
@@ -45,56 +81,39 @@ class MarketPriceController
             return new JsonResponse(['error' => 'Unauthorized'], 401);
         }
 
-        $district = $request->query->get('district', 'Chengalpattu');
-        if (!in_array($district, self::ALLOWED_DISTRICTS, true)) {
+        $districtTamil = $request->query->get('district', 'செங்கல்பட்டு');
+        if (!array_key_exists($districtTamil, self::DISTRICTS)) {
             return new JsonResponse(['error' => 'Invalid district'], 400);
         }
 
         $this->ensureTable();
         $db = Database::getConnection();
         $today = date('Y-m-d');
+        $aliases = self::DISTRICTS[$districtTamil];
 
-        // 1. Indha naal cache check
-        $rows = $this->getCached($district, $today);
+        $rows = $this->getCached($db, $aliases, $today);
+        $dataDate = $today;
+        $stale = false;
 
-        // 2. Cache illa na upstream fetch + store
         if (empty($rows)) {
-            $fetched = $this->fetchFromDataGov($district);
-            if (!empty($fetched)) {
-                $insert = $db->prepare(
-                    'INSERT INTO market_prices
-                     (price_date, district, market, commodity, variety, min_price, max_price, modal_price)
-                     VALUES (:price_date, :district, :market, :commodity, :variety, :min_price, :max_price, :modal_price)'
-                );
-                foreach ($fetched as $r) {
-                    $insert->execute([
-                        'price_date' => $today,
-                        'district' => $district,
-                        'market' => $r['market'],
-                        'commodity' => $r['commodity'],
-                        'variety' => $r['variety'],
-                        'min_price' => $r['min'],
-                        'max_price' => $r['max'],
-                        'modal_price' => $r['modal'],
-                    ]);
-                }
-                $rows = $this->getCached($district, $today);
+            $placeholders = implode(',', array_fill(0, count($aliases), '?'));
+            $stmt = $db->prepare("SELECT MAX(price_date) AS d FROM market_prices WHERE district IN ($placeholders)");
+            $stmt->execute($aliases);
+            $latest = $stmt->fetch()['d'] ?? null;
+            if ($latest !== null) {
+                $rows = $this->getCached($db, $aliases, $latest);
+                $dataDate = $latest;
+                $stale = ($latest !== $today);
             }
         }
 
-        // 3. Upstream fail — latest stale cache fallback
-        $dataDate = $today;
-        $stale = false;
         if (empty($rows)) {
-            $stmt = $db->prepare(
-                'SELECT MAX(price_date) AS d FROM market_prices WHERE district = :district'
-            );
-            $stmt->execute(['district' => $district]);
-            $latest = $stmt->fetch()['d'] ?? null;
-            if ($latest !== null) {
-                $rows = $this->getCached($district, $latest);
-                $dataDate = $latest;
-                $stale = true;
+            $fetched = $this->fetchDistrict($aliases[0]);
+            if (!empty($fetched)) {
+                $this->storeRecords($db, $today, $aliases[0], $fetched);
+                $rows = $this->getCached($db, $aliases, $today);
+                $dataDate = $today;
+                $stale = false;
             }
         }
 
@@ -105,45 +124,157 @@ class MarketPriceController
         }
 
         return new JsonResponse([
-            'district' => $district,
+            'district' => $districtTamil,
             'date' => $dataDate,
             'stale' => $stale,
             'prices' => $rows,
         ]);
     }
 
-    private function getCached(string $district, string $date): array
+    public function syncAll(Request $request): JsonResponse
     {
-        $stmt = Database::getConnection()->prepare(
-            'SELECT market, commodity, variety, min_price, max_price, modal_price
+        $expected = $_ENV['MARKET_SYNC_TOKEN'] ?? '';
+        $given = (string) $request->query->get('token', '');
+        if ($expected === '' || !hash_equals($expected, $given)) {
+            return new JsonResponse(['error' => 'Unauthorized'], 403);
+        }
+
+        $this->ensureTable();
+        $db = Database::getConnection();
+        $today = date('Y-m-d');
+
+        $allRecords = $this->fetchAllTamilNaduRecords();
+        if (empty($allRecords)) {
+            return new JsonResponse([
+                'synced' => false,
+                'message' => 'Upstream fetch returned 0 records - check DATA_GOV_API_KEY / upstream availability.',
+            ], 502);
+        }
+
+        $aliasToTamil = [];
+        foreach (self::DISTRICTS as $tamil => $aliases) {
+            foreach ($aliases as $alias) {
+                $aliasToTamil[$this->normalize($alias)] = $tamil;
+            }
+        }
+
+        $grouped = [];
+        $unmatched = [];
+        foreach ($allRecords as $rec) {
+            $key = $this->normalize($rec['district']);
+            $tamil = $aliasToTamil[$key] ?? null;
+            if ($tamil === null) {
+                $unmatched[$rec['district']] = true;
+                continue;
+            }
+            $grouped[$tamil][] = $rec;
+        }
+
+        $db->beginTransaction();
+        try {
+            $del = $db->prepare('DELETE FROM market_prices WHERE district = :tamil AND price_date = :d');
+            foreach ($grouped as $tamil => $records) {
+                $del->execute(['tamil' => $tamil, 'd' => $today]);
+                $this->storeRecords($db, $today, $tamil, $records);
+            }
+            $db->commit();
+        } catch (\Throwable $e) {
+            $db->rollBack();
+            error_log('Market sync store failed: ' . $e->getMessage());
+            return new JsonResponse(['error' => 'Failed to store synced data'], 500);
+        }
+
+        return new JsonResponse([
+            'synced' => true,
+            'date' => $today,
+            'districts_updated' => count($grouped),
+            'total_records' => array_sum(array_map('count', $grouped)),
+            'unmatched_district_names' => array_slice(array_keys($unmatched), 0, 20),
+        ]);
+    }
+
+    private function normalize(string $s): string
+    {
+        return strtolower(trim(preg_replace('/\s+/', ' ', $s)));
+    }
+
+    private function getCached(\PDO $db, array $aliases, string $date): array
+    {
+        $placeholders = implode(',', array_fill(0, count($aliases), '?'));
+        $stmt = $db->prepare(
+            "SELECT market, commodity, variety, min_price, max_price, modal_price
              FROM market_prices
-             WHERE district = :district AND price_date = :d
-             ORDER BY commodity ASC, market ASC'
+             WHERE district IN ($placeholders) AND price_date = ?
+             ORDER BY commodity ASC, market ASC"
         );
-        $stmt->execute(['district' => $district, 'd' => $date]);
+        $stmt->execute([...$aliases, $date]);
         return $stmt->fetchAll();
     }
 
-    private function fetchFromDataGov(string $district): array
+    private function storeRecords(\PDO $db, string $date, string $districtLabel, array $records): void
+    {
+        $insert = $db->prepare(
+            'INSERT INTO market_prices
+             (price_date, district, market, commodity, variety, min_price, max_price, modal_price)
+             VALUES (:price_date, :district, :market, :commodity, :variety, :min_price, :max_price, :modal_price)'
+        );
+        foreach ($records as $r) {
+            $insert->execute([
+                'price_date' => $date,
+                'district' => $districtLabel,
+                'market' => $r['market'],
+                'commodity' => $r['commodity'],
+                'variety' => $r['variety'],
+                'min_price' => $r['min'],
+                'max_price' => $r['max'],
+                'modal_price' => $r['modal'],
+            ]);
+        }
+    }
+
+    private function fetchDistrict(string $districtAlias): array
+    {
+        return $this->fetchFromDataGov(['filters[district]' => $districtAlias]);
+    }
+
+    private function fetchAllTamilNaduRecords(): array
+    {
+        $all = [];
+        for ($page = 0; $page < self::MAX_PAGES; $page++) {
+            $batch = $this->fetchFromDataGov([], $page * self::PAGE_LIMIT);
+            if (empty($batch)) {
+                break;
+            }
+            $all = array_merge($all, $batch);
+            if (count($batch) < self::PAGE_LIMIT) {
+                break;
+            }
+        }
+        return $all;
+    }
+
+    private function fetchFromDataGov(array $extraFilters, int $offset = 0): array
     {
         $apiKey = $_ENV['DATA_GOV_API_KEY'] ?? '';
         if ($apiKey === '') {
-            error_log('Market prices: DATA_GOV_API_KEY not set');
+            error_log('Market prices: DATA_GOV_API_KEY not set in environment');
             return [];
         }
 
-        $url = self::RESOURCE_URL . '?' . http_build_query([
+        $params = array_merge([
             'api-key' => $apiKey,
             'format' => 'json',
-            'limit' => 200,
-            'filters[state]' => 'Tamil Nadu',
-            'filters[district]' => $district,
-        ]);
+            'limit' => self::PAGE_LIMIT,
+            'offset' => $offset,
+            'filters[state]' => self::STATE_NAME,
+        ], $extraFilters);
+
+        $url = self::RESOURCE_URL . '?' . http_build_query($params);
 
         $ch = curl_init($url);
         curl_setopt_array($ch, [
             CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_TIMEOUT => 25,
+            CURLOPT_TIMEOUT => 30,
             CURLOPT_CONNECTTIMEOUT => 10,
         ]);
         $response = curl_exec($ch);
@@ -163,10 +294,12 @@ class MarketPriceController
         $out = [];
         foreach ($data['records'] as $rec) {
             $commodity = trim($rec['commodity'] ?? '');
-            if ($commodity === '') {
+            $district = trim($rec['district'] ?? '');
+            if ($commodity === '' || $district === '') {
                 continue;
             }
             $out[] = [
+                'district' => $district,
                 'market' => mb_substr(trim($rec['market'] ?? ''), 0, 150),
                 'commodity' => mb_substr($commodity, 0, 150),
                 'variety' => mb_substr(trim($rec['variety'] ?? ''), 0, 150),
