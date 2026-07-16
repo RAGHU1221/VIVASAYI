@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../services/locale_notifier.dart';
 import '../../services/translations.dart';
@@ -13,7 +14,13 @@ class LanguageSelectionScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.background,
-      appBar: AppBar(title: Text(Translations.t(locale, 'language.title'))),
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.canPop() ? context.pop() : context.go('/settings'),
+        ),
+        title: Text(Translations.t(locale, 'language.title')),
+      ),
       body: ListView(
         children: [
           RadioListTile<String>(
