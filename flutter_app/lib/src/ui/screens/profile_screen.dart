@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:dio/dio.dart';
 import '../../services/auth_service.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -43,6 +44,65 @@ class _ProfileScreenState extends State<ProfileScreen> {
       setState(() {
         _isLoading = false;
       });
+    }
+  }
+
+  Future<void> _editEmail() async {
+    final controller = TextEditingController(text: '${_profile?['email'] ?? ''}' == '-' ? '' : '${_profile?['email'] ?? ''}');
+    String? errorText;
+
+    final saved = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (dialogContext, setDialogState) => AlertDialog(
+          title: const Text('மின்னஞ்சல் புதுப்பிக்க'),
+          content: TextField(
+            controller: controller,
+            keyboardType: TextInputType.emailAddress,
+            autofocus: true,
+            decoration: InputDecoration(
+              hintText: 'example@mail.com',
+              errorText: errorText,
+              border: const OutlineInputBorder(),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('ரத்து செய்'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final email = controller.text.trim();
+                if (email.isNotEmpty && !RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(email)) {
+                  setDialogState(() => errorText = 'சரியான மின்னஞ்சலை உள்ளிடவும்');
+                  return;
+                }
+                try {
+                  final result = await _authService.updateProfile(email: email);
+                  if (!mounted) return;
+                  setState(() {
+                    _profile = Map<String, dynamic>.from(result['profile'] as Map);
+                  });
+                  Navigator.of(dialogContext).pop(true);
+                } on DioException catch (e) {
+                  final serverMsg = (e.response?.data is Map) ? e.response?.data['error'] as String? : null;
+                  setDialogState(() => errorText = serverMsg ?? 'புதுப்பிக்க முடியவில்லை. மீண்டும் முயற்சிக்கவும்.');
+                } catch (_) {
+                  setDialogState(() => errorText = 'புதுப்பிக்க முடியவில்லை. மீண்டும் முயற்சிக்கவும்.');
+                }
+              },
+              child: const Text('சேமி'),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (saved == true && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('மின்னஞ்சல் புதுப்பிக்கப்பட்டது')),
+      );
     }
   }
 
