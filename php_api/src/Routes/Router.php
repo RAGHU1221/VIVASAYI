@@ -73,6 +73,7 @@ class Router
             $r->addRoute('PUT', '/listings/{id:\d+}', [self::class, 'listingsUpdate']);
             $r->addRoute('DELETE', '/listings/{id:\d+}', [self::class, 'listingsDelete']);
             $r->addRoute('GET', '/profile', [self::class, 'profile']);
+            $r->addRoute('PUT', '/profile', [self::class, 'updateProfile']);
             $r->addRoute('GET', '/profile/stats', [self::class, 'profileStats']);
             $r->addRoute('GET', '/profile/farms', [self::class, 'profileFarms']);
             $r->addRoute('POST', '/profile/pin', [self::class, 'setPin']);
@@ -478,6 +479,17 @@ class Router
 
         $controller = new AuthController();
         return $controller->profile($request);
+    }
+
+    public static function updateProfile(Request $request, array $vars): Response
+    {
+        $authResponse = self::authorize($request, ['admin', 'user']);
+        if ($authResponse !== null) {
+            return $authResponse;
+        }
+
+        $controller = new AuthController();
+        return $controller->updateProfile($request);
     }
 
     public static function profileFarms(Request $request, array $vars): Response
