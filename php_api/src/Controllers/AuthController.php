@@ -45,7 +45,8 @@ class AuthController
     }
 
     private function loginInner(Request $request): JsonResponse
-    {yload = json_decode($request->getContent(), true);
+    {
+        $payload = json_decode($request->getContent(), true);
 
         if (!is_array($payload)) {
             return new JsonResponse(['error' => 'Invalid request body'], 400);
