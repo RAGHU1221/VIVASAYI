@@ -21,6 +21,7 @@ use App\Controllers\FamilyMemberController;
 use App\Controllers\ListingController;
 use App\Controllers\MarketPriceController;
 use App\Controllers\PinController;
+use App\Controllers\CropController;
 use App\Controllers\SchemeController;
 use App\Controllers\SessionController;
 use App\Controllers\UserController;
@@ -53,6 +54,9 @@ class Router
             $r->addRoute('PUT', '/diary/{id:\d+}', [self::class, 'diaryUpdate']);
             $r->addRoute('DELETE', '/diary/{id:\d+}', [self::class, 'diaryDelete']);
             $r->addRoute('GET', '/market-prices', [self::class, 'marketPrices']);
+            $r->addRoute('GET', '/crops', [self::class, 'cropsIndex']);
+            $r->addRoute('GET', '/crops/{id:\d+}/varieties', [self::class, 'cropVarieties']);
+            $r->addRoute('POST', '/crops/advisor', [self::class, 'cropAdvisor']);
             $r->addRoute('GET', '/schemes', [self::class, 'schemesIndex']);
             $r->addRoute('POST', '/schemes', [self::class, 'schemesCreate']);
             $r->addRoute('PUT', '/schemes/{id:\d+}', [self::class, 'schemesUpdate']);
@@ -271,6 +275,21 @@ class Router
 
         $controller = new MarketPriceController();
         return $controller->index($request);
+    }
+
+        public static function cropsIndex(Request $request, array $vars): Response
+    {
+        return (new CropController())->crops($request);
+    }
+
+    public static function cropVarieties(Request $request, array $vars): Response
+    {
+        return (new CropController())->varieties($request, $vars);
+    }
+
+    public static function cropAdvisor(Request $request, array $vars): Response
+    {
+        return (new CropController())->advisor($request);
     }
 
     public static function schemesIndex(Request $request, array $vars): Response
