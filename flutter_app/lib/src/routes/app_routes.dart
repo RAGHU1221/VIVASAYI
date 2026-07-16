@@ -27,6 +27,7 @@ import '../ui/screens/diary_screen.dart';
 import '../ui/screens/market_price_screen.dart';
 import '../ui/screens/reports_screen.dart';
 import '../ui/screens/schemes_screen.dart';
+import '../ui/screens/variety_advisor_screen.dart';
 import '../ui/screens/community_screen.dart';
 import '../ui/screens/store_screen.dart';
 
@@ -157,6 +158,10 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: '/reports',
       builder: (context, state) => const ReportsScreen(),
+    ),
+    GoRoute(
+      path: '/variety-advisor',
+      builder: (context, state) => const VarietyAdvisorScreen(),
     ),
     GoRoute(
       path: '/schemes',
