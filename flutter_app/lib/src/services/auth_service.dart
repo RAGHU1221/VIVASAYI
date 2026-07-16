@@ -28,6 +28,14 @@ class AuthService {
     return response.data as Map<String, dynamic>;
   }
 
+  Future<Map<String, dynamic>> updateProfile({String? email, String? name}) async {
+    final data = <String, dynamic>{};
+    if (email != null) data['email'] = email;
+    if (name != null) data['name'] = name;
+    final response = await _dio.put('/profile', data: data);
+    return response.data as Map<String, dynamic>;
+  }
+
   Future<Map<String, dynamic>> getFarms() async {
     final response = await _dio.get('/profile/farms');
     return response.data as Map<String, dynamic>;
