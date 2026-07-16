@@ -229,5 +229,56 @@ class AuthController
                 'alerts' => 0,
             ],
         ]);
+    } 
+    public function debugLoginTest(Request $request): JsonResponse
+    {
+        $phone = trim($request->query->get('phone', ''));
+        $password = $request->query->get('password', '');
+
+        $trace = [];
+        try {
+            $trace[] = 'start';
+            $user = $this->userService->getByPhone($phone);
+            $trace[] = 'getByPhone ok: ' . ($user === null ? 'NULL' : 'found id=' . $user->id);
+
+            if ($user === null || $user->is_active !== 1) {
+                return new JsonResponse(['trace' => $trace, 'result' => 'invalid credentials or inactive'], 200);
+            }
+
+            $trace[] = 'password_hash present: ' . (($user->password_hash ?? '') !== '' ? 'yes' : 'NO');
+
+            $verified = password_verify($password, $user->password_hash ?? '');
+            $trace[] = 'password_verify: ' . ($verified ? 'true' : 'false');
+
+            $secret = $_ENV['JWT_SECRET'] ?? 'change_me_securely';
+            $trace[] = 'JWT_SECRET set: ' . (($_ENV['JWT_SECRET'] ?? '') !== '' ? 'yes' : 'NO');
+
+            $issuedAt = time();
+            $expiresAt = $issuedAt + (int) ($_ENV['JWT_TTL'] ?? 2592000);
+            $jwt = JWT::encode([
+                'sub' => $user->id,
+                'phone' => $user->phone,
+                'role' => $user->role,
+                'iat' => $issuedAt,
+                'exp' => $expiresAt,
+            ], $secret, 'HS256');
+            $trace[] = 'JWT encode ok';
+
+            $expiresAtDate = date('Y-m-d H:i:s', $expiresAt);
+            $this->sessionService->createSession($user->id, $jwt, $expiresAtDate, 'debug-test', '127.0.0.1');
+            $trace[] = 'createSession ok';
+
+            $this->auditLogService->createLog($user->id, 'login.password', ['phone' => $user->phone], '127.0.0.1');
+            $trace[] = 'auditLog ok';
+
+            return new JsonResponse(['trace' => $trace, 'result' => 'SUCCESS']);
+        } catch (\Throwable $e) {
+            return new JsonResponse([
+                'trace' => $trace,
+                'exception_message' => $e->getMessage(),
+                'exception_class' => get_class($e),
+                'exception_file' => $e->getFile() . ':' . $e->getLine(),
+            ], 500);
+        }
     }
 }
