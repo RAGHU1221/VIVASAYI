@@ -15,26 +15,44 @@ class _MarketPriceScreenState extends State<MarketPriceScreen> {
 
   /// Tamil display → data.gov.in English district value
   static const Map<String, String> districts = {
-    'செங்கல்பட்டு': 'Chengalpattu',
+    'அரியலூர்': 'Ariyalur',
     'சென்னை': 'Chennai',
     'கோயம்புத்தூர்': 'Coimbatore',
     'கடலூர்': 'Cuddalore',
+    'தர்மபுரி': 'Dharmapuri',
     'திண்டுக்கல்': 'Dindigul',
     'ஈரோடு': 'Erode',
     'காஞ்சிபுரம்': 'Kancheepuram',
+    'கன்னியாகுமரி': 'Kanyakumari',
     'கரூர்': 'Karur',
+    'கிருஷ்ணகிரி': 'Krishnagiri',
     'மதுரை': 'Madurai',
     'நாகப்பட்டினம்': 'Nagapattinam',
     'நாமக்கல்': 'Namakkal',
+    'நீலகிரி': 'Nilgiris',
+    'பெரம்பலூர்': 'Perambalur',
+    'புதுக்கோட்டை': 'Pudukkottai',
+    'இராமநாதபுரம்': 'Ramanathapuram',
     'சேலம்': 'Salem',
+    'சிவகங்கை': 'Sivaganga',
     'தஞ்சாவூர்': 'Thanjavur',
     'தேனி': 'Theni',
+    'தூத்துக்குடி': 'Thoothukudi',
+    'திருச்சிராப்பள்ளி': 'Tiruchirappalli',
     'திருநெல்வேலி': 'Tirunelveli',
     'திருப்பூர்': 'Tiruppur',
-    'திருச்சி': 'Trichy',
+    'திருவள்ளூர்': 'Tiruvallur',
+    'திருவண்ணாமலை': 'Tiruvannamalai',
+    'திருவாரூர்': 'Tiruvarur',
     'வேலூர்': 'Vellore',
     'விழுப்புரம்': 'Villupuram',
     'விருதுநகர்': 'Virudhunagar',
+    'செங்கல்பட்டு': 'Chengalpattu',
+    'கள்ளக்குறிச்சி': 'Kallakurichi',
+    'மயிலாடுதுறை': 'Mayiladuthurai',
+    'ராணிப்பேட்டை': 'Ranipet',
+    'தென்காசி': 'Tenkasi',
+    'திருப்பத்தூர்': 'Tirupattur',
   };
 
   /// Common commodity English → Tamil
@@ -106,7 +124,7 @@ class _MarketPriceScreenState extends State<MarketPriceScreen> {
     try {
       final response = await ApiClient.instance.dio.get(
         '/market-prices',
-        queryParameters: {'district': districts[_districtTamil]},
+        queryParameters: {'district': _districtTamil},
       );
       final data = response.data as Map<String, dynamic>;
       if (!mounted) return;
