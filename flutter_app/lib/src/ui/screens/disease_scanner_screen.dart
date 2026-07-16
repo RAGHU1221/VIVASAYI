@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../services/disease_scan_service.dart';
 import '../../services/locale_notifier.dart';
@@ -88,7 +89,13 @@ class _DiseaseScannerScreenState extends State<DiseaseScannerScreen> {
 
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.background,
-      appBar: AppBar(title: Text(Translations.t(locale, 'disease_scanner.title'))),
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.canPop() ? context.pop() : context.go('/dashboard'),
+        ),
+        title: Text(Translations.t(locale, 'disease_scanner.title')),
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16.0),
