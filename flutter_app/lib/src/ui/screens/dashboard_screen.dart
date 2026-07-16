@@ -700,7 +700,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   axis: Axis.horizontal,
                   sizeFactor: animation,
                   child: GestureDetector(
-                    onTap: () => context.go('/farm-overview', extra: {'farm': farm}),
+                    onTap: () => context.push('/farm-overview', extra: {'farm': farm}),
                     child: FarmCard(
                       key: ValueKey(farm['id']),
                       label: title,
