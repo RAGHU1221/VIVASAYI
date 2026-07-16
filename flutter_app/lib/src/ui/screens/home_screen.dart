@@ -82,7 +82,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             const SizedBox(height: 16),
             ElevatedButton(
-              onPressed: () => context.go('/farm-overview'),
+              onPressed: () => context.push('/farm-overview'),
               style: ElevatedButton.styleFrom(
                 minimumSize: const Size.fromHeight(56),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
