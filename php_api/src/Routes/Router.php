@@ -54,6 +54,7 @@ class Router
             $r->addRoute('PUT', '/diary/{id:\d+}', [self::class, 'diaryUpdate']);
             $r->addRoute('DELETE', '/diary/{id:\d+}', [self::class, 'diaryDelete']);
             $r->addRoute('GET', '/market-prices', [self::class, 'marketPrices']);
+            $r->addRoute('GET', '/market-prices/sync', [self::class, 'marketPricesSync']);
             $r->addRoute('GET', '/crops', [self::class, 'cropsIndex']);
             $r->addRoute('GET', '/crops/{id:\d+}/varieties', [self::class, 'cropVarieties']);
             $r->addRoute('POST', '/crops/advisor', [self::class, 'cropAdvisor']);
@@ -276,6 +277,16 @@ class Router
 
         $controller = new MarketPriceController();
         return $controller->index($request);
+    }
+
+    public static function marketPricesSync(Request $request, array $vars): Response
+    {
+        // NOTE: intentionally NO self::authorize() here — this endpoint is
+        // hit once a day by an external cron service (cron-job.org), not by
+        // a logged-in farmer. It checks its own MARKET_SYNC_TOKEN secret
+        // inside MarketPriceController::syncAll().
+        $controller = new MarketPriceController();
+        return $controller->syncAll($request);
     }
 
         public static function cropsIndex(Request $request, array $vars): Response
