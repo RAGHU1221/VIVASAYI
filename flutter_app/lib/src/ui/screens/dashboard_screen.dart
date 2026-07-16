@@ -185,12 +185,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     _buildFarmSection(context),
                     const SizedBox(height: 20),
                     _buildFooterCards(context),
-                    const SizedBox(height: 72),
+                    const SizedBox(height: 24),
                   ],
                 ),
               ),
             ),
-            _buildBottomNavigation(context),
           ],
         ),
       ),
@@ -567,6 +566,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
         onTap: () => context.push('/disease-scanner'),
       ),
       _ActionItem(
+        icon: Icons.psychology,
+        label: 'நெல் ரக ஆலோசகர்',
+        onTap: () => context.push('/variety-advisor'),
+      ),
+      _ActionItem(
         icon: Icons.book,
         label: 'நாள் குறிப்பு',
         onTap: () => context.push('/diary'),
@@ -741,28 +745,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildBottomNavigation(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10),
-        ],
-      ),
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _NavIcon(icon: Icons.home, label: 'முகப்பு', active: true, onTap: () {}),
-          _NavIcon(icon: Icons.bar_chart, label: 'அறிக்கைகள்', onTap: () => context.push('/reports')),
-          _NavIcon(icon: Icons.mic, label: 'AI உதவியாளர்', onTap: () => context.push('/ai-chat')),
-          _NavIcon(icon: Icons.group, label: 'சமூகங்கள்', onTap: () => context.push('/community')),
-          _NavIcon(icon: Icons.store, label: 'கடை', onTap: () => context.push('/store')),
-        ],
-      ),
-    );
   }
-}
 
 class _CircleIconButton extends StatelessWidget {
   final IconData icon;
@@ -923,34 +906,6 @@ class _FeatureCard extends StatelessWidget {
           const SizedBox(height: 8),
           Text(subtitle, style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
         ],
-      ),
-    );
-  }
-}
-
-class _NavIcon extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final bool active;
-  final VoidCallback? onTap;
-
-  const _NavIcon({required this.icon, required this.label, this.active = false, this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, color: active ? Theme.of(context).colorScheme.primary : Colors.grey),
-            const SizedBox(height: 4),
-            Text(label, style: TextStyle(fontSize: 10, color: active ? Theme.of(context).colorScheme.primary : Colors.grey)),
-          ],
-        ),
       ),
     );
   }
