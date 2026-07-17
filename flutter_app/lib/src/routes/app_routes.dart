@@ -204,8 +204,9 @@ final GoRouter appRouter = GoRouter(
       builder: (context, state, child) {
         int _indexForLocation(String loc) {
           if (loc.startsWith('/dashboard')) return 1;
-          if (loc.startsWith('/profile')) return 2;
-          if (loc.startsWith('/settings')) return 3;
+          if (loc.startsWith('/ai-chat')) return 2;
+          if (loc.startsWith('/profile')) return 3;
+          if (loc.startsWith('/settings')) return 4;
           return 0; // default to home
         }
 
@@ -225,9 +226,12 @@ final GoRouter appRouter = GoRouter(
                   context.go('/dashboard');
                   break;
                 case 2:
-                  context.go('/profile');
+                  context.go('/ai-chat');
                   break;
                 case 3:
+                  context.go('/profile');
+                  break;
+                case 4:
                   context.go('/settings');
                   break;
               }
@@ -235,6 +239,7 @@ final GoRouter appRouter = GoRouter(
             items: const [
               BottomNavigationBarItem(icon: Icon(Icons.home), label: 'முகப்பு'),
               BottomNavigationBarItem(icon: Icon(Icons.dashboard), label: 'டேஷ்போர்ட்'),
+              BottomNavigationBarItem(icon: Icon(Icons.mic), label: 'AI உதவியாளர்'),
               BottomNavigationBarItem(icon: Icon(Icons.person), label: 'சுயவிவரம்'),
               BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'அமைப்புகள்'),
             ],
