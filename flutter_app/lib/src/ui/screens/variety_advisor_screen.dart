@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../services/api_client.dart';
+import '../widgets/process_loading_indicator.dart';
 
 /// நெல் ரக ஆலோசகர் — விவசாயி விவரம் கொடுத்தா, தரவுத்தளத்தில் இருக்கும்
 /// TNAU ரகங்களை AI தரவரிசைப்படுத்தி 🥇🥈🥉 பரிந்துரை தரும்.
@@ -143,9 +144,9 @@ class _VarietyAdvisorScreenState extends State<VarietyAdvisorScreen> {
                       onPressed: _loading ? null : _getAdvice,
                       icon: _loading
                           ? const SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                              width: 22,
+                              height: 22,
+                              child: ProcessLoadingIndicator(size: 22, color: Colors.white))
                           : const Icon(Icons.psychology_outlined),
                       label: Text(_loading ? 'பகுப்பாய்வு நடக்கிறது...' : 'சிறந்த ரகம் பரிந்துரை'),
                       style: ElevatedButton.styleFrom(
