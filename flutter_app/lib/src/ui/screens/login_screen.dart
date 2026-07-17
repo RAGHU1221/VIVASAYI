@@ -198,7 +198,32 @@ class _LoginScreenState extends State<LoginScreen> {
                         style: TextStyle(color: Colors.black54)),
                     const SizedBox(width: 4),
                     TextButton(
-                        onPressed: () {}, child: const Text('தொடர்பிற்கு')),
+  onPressed: () => showDialog(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: const Text('உதவி & தொடர்பு'),
+      content: const Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('📞 அழைக்க: +91 XXXXX XXXXX'),
+          SizedBox(height: 8),
+          Text('✉️ மின்னஞ்சல்: support@vivasayi.app'),
+          SizedBox(height: 8),
+          Text('🕐 நேரம்: காலை 9 - மாலை 6'),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(ctx),
+          child: const Text('சரி'),
+        ),
+      ],
+    ),
+  ),
+  child: const Text('தொடர்பிற்கு'),
+),
+                       
                   ],
                 ),
               ),
