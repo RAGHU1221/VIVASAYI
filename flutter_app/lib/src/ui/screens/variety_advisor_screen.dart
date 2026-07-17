@@ -146,7 +146,7 @@ class _VarietyAdvisorScreenState extends State<VarietyAdvisorScreen> {
                           ? const SizedBox(
                               width: 22,
                               height: 22,
-                              child: ProcessLoadingIndicator(size: 22, color: Colors.white))
+                              child: const ProcessLoadingIndicator(size: 22, color: Colors.white))
                           : const Icon(Icons.psychology_outlined),
                       label: Text(_loading ? 'பகுப்பாய்வு நடக்கிறது...' : 'சிறந்த ரகம் பரிந்துரை'),
                       style: ElevatedButton.styleFrom(
