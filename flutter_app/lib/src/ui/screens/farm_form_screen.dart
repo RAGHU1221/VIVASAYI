@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:dio/dio.dart';
 import '../../services/auth_service.dart';
 import '../../services/farm_notifier.dart';
 
@@ -69,9 +70,15 @@ class _FarmFormScreenState extends State<FarmFormScreen> {
       FarmNotifier.instance.addOrUpdate(Map<String, dynamic>.from(resp));
       if (!mounted) return;
       Navigator.of(context).pop(resp);
+    } on DioException catch (e) {
+      if (!mounted) return;
+      final serverMsg = (e.response?.data is Map) ? e.response?.data['error'] as String? : null;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(serverMsg ?? 'பண்ணை சேமிக்க முடியவில்லை. மீண்டும் முயற்சிக்கவும்.')),
+      );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('பயிர் சேமிக்க அனுமதி இல்லை')));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('பண்ணை சேமிக்க முடியவில்லை. மீண்டும் முயற்சிக்கவும்.')));
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }
