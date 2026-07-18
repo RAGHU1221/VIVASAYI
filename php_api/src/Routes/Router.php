@@ -87,6 +87,7 @@ class Router
 
             $r->addRoute('GET', '/disease-scans', [self::class, 'listDiseaseScans']);
             $r->addRoute('POST', '/disease-scans', [self::class, 'createDiseaseScan']);
+            $r->addRoute('POST', '/disease-scans/analyze', [self::class, 'analyzeDiseaseScan']);
 
             $r->addRoute('GET', '/farmers', [self::class, 'listFarmers']);
             $r->addRoute('GET', '/farmers/{id:\d+}', [self::class, 'getFarmer']);
@@ -621,6 +622,17 @@ class Router
 
         $controller = new DiseaseScanController();
         return $controller->create($request);
+    }
+
+    public static function analyzeDiseaseScan(Request $request, array $vars): Response
+    {
+        $authResponse = self::authorize($request, ['admin', 'user']);
+        if ($authResponse !== null) {
+            return $authResponse;
+        }
+
+        $controller = new DiseaseScanController();
+        return $controller->analyze($request);
     }
 
     public static function auditLogs(Request $request, array $vars): Response
