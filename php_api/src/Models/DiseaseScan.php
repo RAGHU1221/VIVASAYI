@@ -11,6 +11,7 @@ class DiseaseScan
     public ?string $predicted_label;
     public ?float $confidence;
     public ?string $model_version;
+    public ?string $solution_text;
     public string $status;
     public string $created_at;
 
@@ -23,6 +24,7 @@ class DiseaseScan
         $this->predicted_label = $data['predicted_label'] ?? null;
         $this->confidence = isset($data['confidence']) ? (float) $data['confidence'] : null;
         $this->model_version = $data['model_version'] ?? null;
+        $this->solution_text = $data['solution_text'] ?? null;
         $this->status = $data['status'];
         $this->created_at = $data['created_at'];
     }
@@ -37,6 +39,7 @@ class DiseaseScan
             'predicted_label' => $this->predicted_label,
             'confidence' => $this->confidence,
             'model_version' => $this->model_version,
+            'solution_text' => $this->solution_text,
             'status' => $this->status,
             'created_at' => $this->created_at,
         ];
