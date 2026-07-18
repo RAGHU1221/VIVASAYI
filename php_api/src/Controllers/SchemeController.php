@@ -32,6 +32,109 @@ class SchemeController
         if ($count === 0) {
             $this->seed($db);
         }
+        $this->seedAedSchemesIfMissing($db);
+    }
+
+    /**
+     * Tamil Nadu Agricultural Engineering Department (aed.tn.gov.in) machinery
+     * / irrigation subsidy schemes — added as a separate idempotent step
+     * (checked by title) so it safely runs on databases that were already
+     * seeded before this update, including the live production DB. Source:
+     * aed.tn.gov.in scheme pages (Sub Mission on Agricultural Mechanisation,
+     * Individual/Cluster based subsidy schemes) — subsidy % and machinery
+     * names taken directly from the department's published scheme text, not
+     * invented.
+     */
+    private function seedAedSchemesIfMissing(\PDO $db): void
+    {
+        $schemes = [
+            [
+                'title' => 'தேசிய வேளாண் இயந்திரமயமாக்கல் துணைத் திட்டம் (SMAM)',
+                'category' => 'வேளாண் பொறியியல் துறை',
+                'description' => 'விவசாயிகளுக்கு தனிநபர் அடிப்படையில் வேளாண் இயந்திரங்கள்/கருவிகள் (பவர் டில்லர், பவர் வீடர், சாஃப் கட்டர், பிரஷ் கட்டர், நெல் நடவு இயந்திரம், டிராக்டர் ரோட்டாவேட்டர், கல்டிவேட்டர், டிஸ்க் ப்ளவ், லேசர் லேண்ட் லெவலர், விதை-உர சொருகி, தென்னை மட்டை துண்டாக்கி, பல பயிர் தாள்படி இயந்திரம் போன்றவை) வாங்க மானிய உதவி.',
+                'eligibility' => 'அனைத்து விவசாயிகளும் தனிநபர் இயந்திர மானியத்திற்கு விண்ணப்பிக்கலாம்.',
+                'benefits' => 'சிறு/குறு விவசாயிகளில் SC/ST பிரிவினருக்கு கூடுதல் 20% மானியம்; பொது பிரிவு சிறு/குறு விவசாயிகளுக்கு பவர் வீடர் மற்றும் நெல் நடவு இயந்திரத்திற்கு கூடுதல் 10% மானியம்.',
+                'how_to_apply' => 'அருகிலுள்ள உதவி வேளாண்மைப் பொறியியலாளர் (AAE) அலுவலகம் அல்லது aed.tn.gov.in மூலம் விண்ணப்பிக்கவும்.',
+                'link' => 'https://aed.tn.gov.in/en/schemes/agricultural-mechanisation/sub-mission-on-agricultural-mechanisation/',
+            ],
+            [
+                'title' => 'கிராம அளவிலான வாடகை அடிப்படை மைய திட்டம் (VLCHC)',
+                'category' => 'வேளாண் பொறியியல் துறை',
+                'description' => 'பதிவு செய்யப்பட்ட விவசாயிகள் சங்கம், கூட்டுறவு சங்கங்கள், சுய உதவிக் குழுக்கள் (SHG), விவசாயிகள் உற்பத்தியாளர் நிறுவனங்கள் (FPO) மூலம் கிராம அளவில் இயந்திர வாடகை மையம் அமைக்க மானியம்.',
+                'eligibility' => 'பதிவு செய்யப்பட்ட விவசாயிகள் சங்கங்கள், கூட்டுறவு சங்கங்கள், SHG, FPO — சென்னை தவிர்த்து அனைத்து மாவட்டங்களும்.',
+                'benefits' => 'இயந்திரங்கள் மொத்த செலவில் 80% மானியம் (அதிகபட்சம் ரூ.8 லட்சம்).',
+                'how_to_apply' => 'அருகிலுள்ள வேளாண்மைப் பொறியியல் துறை மாவட்ட அலுவலகத்தில் சங்கம்/FPO மூலம் விண்ணப்பிக்கவும்.',
+                'link' => 'https://aed.tn.gov.in/en/cluster-based-subsidy-schemes/',
+            ],
+            [
+                'title' => 'தொகுதி அளவிலான வாடகை அடிப்படை மைய திட்டம் (BLCHC)',
+                'category' => 'வேளாண் பொறியியல் துறை',
+                'description' => 'கிராமப்புற தொழில் முனைவோர், கூட்டுறவு சங்கங்கள், SHG, FPO மூலம் தொகுதி (Block) அளவில் பெரிய இயந்திர வாடகை மையம் அமைக்க மானியம்.',
+                'eligibility' => 'கிராமப்புற தொழில் முனைவோர், கூட்டுறவு சங்கங்கள், SHG, பதிவு செய்யப்பட்ட விவசாயிகள் சங்கங்கள், FPO.',
+                'benefits' => 'இயந்திரங்கள் மொத்த செலவில் 40% மானியம் (ஒரு தொகுதிக்கு அதிகபட்சம் ரூ.10 லட்சம்).',
+                'how_to_apply' => 'அருகிலுள்ள வேளாண்மைப் பொறியியல் துறை மாவட்ட அலுவலகத்தில் விண்ணப்பிக்கவும்.',
+                'link' => 'https://aed.tn.gov.in/en/cluster-based-subsidy-schemes/',
+            ],
+            [
+                'title' => 'கரும்பு அடிப்படையிலான வாடகை மைய திட்டம்',
+                'category' => 'வேளாண் பொறியியல் துறை',
+                'description' => 'கரும்பு பயிரிடும் பகுதிகளில் அறுவடை/பதப்படுத்தும் இயந்திரங்களுடன் கூடிய Custom Hiring Centre அமைக்க மானியம்.',
+                'eligibility' => 'கரும்பு விவசாயிகள் குழுக்கள், கூட்டுறவு சங்கங்கள்.',
+                'benefits' => 'மொத்த ரூ.150 லட்சம் திட்ட செலவில் 40% மானியம் (அதிகபட்சம் ரூ.60 லட்சம்).',
+                'how_to_apply' => 'அருகிலுள்ள வேளாண்மைப் பொறியியல் துறை அலுவலகத்தில் விண்ணப்பிக்கவும்.',
+                'link' => 'https://aed.tn.gov.in/en/individual-based-subsidy-schemes/',
+            ],
+            [
+                'title' => 'மதிப்புக் கூட்டு இயந்திரங்கள் மானியம் (Value Addition Machinery)',
+                'category' => 'வேளாண் பொறியியல் துறை',
+                'description' => 'விவசாய விளைபொருட்களை மதிப்புக் கூட்டி பதப்படுத்த தனிநபர் விவசாயிகள் மற்றும் விவசாயிகள் குழுக்களுக்கு இயந்திர மானியம்.',
+                'eligibility' => 'தனிநபர் விவசாயிகள் மற்றும் விவசாயிகள் குழுக்கள்.',
+                'benefits' => 'இயந்திரச் செலவில் அதிகபட்சம் 40% மானியம் (அரசு நிர்ணயித்த வரம்புக்கு உட்பட்டு).',
+                'how_to_apply' => 'அருகிலுள்ள வேளாண்மைப் பொறியியல் துறை அலுவலகத்தில் விண்ணப்பிக்கவும்.',
+                'link' => 'https://aed.tn.gov.in/en/individual-based-subsidy-schemes/',
+            ],
+            [
+                'title' => 'சூரிய சக்தி உலர்த்தி மானியம் (Solar Dryer)',
+                'category' => 'வேளாண் பொறியியல் துறை',
+                'description' => 'எண்ணெய் வித்துக்கள் (கொப்பரை, எள், நிலக்கடலை), பழங்கள் (வாழை, நெல்லி), மசாலா (கிராம்பு, இஞ்சி), மிளகாய், முருங்கை இலை போன்றவற்றை சுகாதாரமாக உலர்த்த 400-1,000 சதுர அடி பாலிகார்பனேட் கிரீன்ஹவுஸ் உலர்த்தி அமைக்க மானியம்.',
+                'eligibility' => 'தனிநபர் விவசாயிகள் மற்றும் விவசாயிகள் குழுக்கள்.',
+                'benefits' => 'உலர்த்தி மொத்த செலவில் 40% மானியம் — நேரடியாக விவசாயியின் வங்கிக் கணக்கில் பின்-இணைப்பு (back-ended) மானியமாக செலுத்தப்படும்.',
+                'how_to_apply' => 'அருகிலுள்ள வேளாண்மைப் பொறியியல் துறை அலுவலகத்தில் விண்ணப்பிக்கவும்.',
+                'link' => 'https://aed.tn.gov.in/',
+            ],
+            [
+                'title' => 'ஆஃப்-கிரிட் சூரிய சக்தி நீர்ப்பாசன பம்பு மானியம்',
+                'category' => 'வேளாண் பொறியியல் துறை',
+                'description' => 'மின் இணைப்பு இல்லாத பகுதிகளில் நீர்ப்பாசனத்திற்காக சூரிய சக்தி இயங்கும் தனித்த (off-grid) பம்பு செட் அமைக்க மானியம்.',
+                'eligibility' => 'மின் இணைப்பு இல்லாத / டீசல் பம்பு பயன்படுத்தும் விவசாயிகள்.',
+                'benefits' => 'சூரிய பம்பு செட் செலவில் மானிய உதவி (சதவீதம் திட்ட வழிகாட்டுதலின்படி மாறுபடும்).',
+                'how_to_apply' => 'அருகிலுள்ள வேளாண்மைப் பொறியியல் துறை அலுவலகத்தில் விண்ணப்பிக்கவும்.',
+                'link' => 'https://aed.tn.gov.in/',
+            ],
+            [
+                'title' => 'நுண் நீர்நிலை மேம்பாட்டு மற்றும் வயல்வரப்பு/குளம் திட்டம்',
+                'category' => 'வேளாண் பொறியியல் துறை',
+                'description' => 'மானாவாரி (dryland) தொகுதிகளில் தனிநபர் விவசாயிகளின் நிலத்தில் வயல் வரப்பு (field bund) மற்றும் பண்ணைக் குளம் (farm pond) அமைத்து மழைநீர் சேமிப்பை மேம்படுத்துதல்.',
+                'eligibility' => 'மானாவாரி தொகுதிகளில் உள்ள தனிநபர் விவசாயிகள்.',
+                'benefits' => 'சமூக நீர் ஆதார உருவாக்கத்திற்கு 100% மானியம்; தொடர்புடைய திட்ட வழிகாட்டுதலின்படி மற்ற மானியங்கள்.',
+                'how_to_apply' => 'அருகிலுள்ள வேளாண்மைப் பொறியியல் துறை அலுவலகத்தில் விண்ணப்பிக்கவும்.',
+                'link' => 'https://aed.tn.gov.in/en/cluster-based-subsidy-schemes/',
+            ],
+        ];
+
+        $exists = $db->prepare('SELECT COUNT(*) FROM schemes WHERE title = :title');
+        $insert = $db->prepare(
+            'INSERT INTO schemes (title, category, description, eligibility, benefits, how_to_apply, link)
+             VALUES (:title, :category, :description, :eligibility, :benefits, :how_to_apply, :link)'
+        );
+
+        foreach ($schemes as $s) {
+            $exists->execute(['title' => $s['title']]);
+            if ((int) $exists->fetchColumn() > 0) {
+                continue; // already seeded — skip
+            }
+            $insert->execute($s);
+        }
     }
 
     private function seed(\PDO $db): void
