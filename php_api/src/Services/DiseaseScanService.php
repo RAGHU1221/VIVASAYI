@@ -9,11 +9,36 @@ use RuntimeException;
 
 class DiseaseScanService
 {
+    private static bool $columnsEnsured = false;
+
+    /**
+     * AI vision analysis-la irundhu varra Tamil solution text (paragraph
+     * length) store panna, predicted_label VARCHAR(150) podhaathu. Existing
+     * live DB-layum automatic-ah run aagum (idempotent, matches CropController
+     * pattern elsewhere in this codebase).
+     */
+    private function ensureColumns(): void
+    {
+        if (self::$columnsEnsured) {
+            return;
+        }
+        try {
+            Database::getConnection()->exec(
+                'ALTER TABLE disease_scans ADD COLUMN IF NOT EXISTS solution_text TEXT DEFAULT NULL AFTER model_version'
+            );
+        } catch (\Throwable $e) {
+            error_log('disease_scans.solution_text migration warning: ' . $e->getMessage());
+        }
+        self::$columnsEnsured = true;
+    }
+
     public function create(array $payload): DiseaseScan
     {
+        $this->ensureColumns();
+
         $stmt = Database::getConnection()->prepare(
-            'INSERT INTO disease_scans (user_id, farm_id, image_path, predicted_label, confidence, model_version, status)
-            VALUES (:user_id, :farm_id, :image_path, :predicted_label, :confidence, :model_version, :status)'
+            'INSERT INTO disease_scans (user_id, farm_id, image_path, predicted_label, confidence, model_version, solution_text, status)
+            VALUES (:user_id, :farm_id, :image_path, :predicted_label, :confidence, :model_version, :solution_text, :status)'
         );
 
         $stmt->execute([
@@ -23,6 +48,7 @@ class DiseaseScanService
             'predicted_label' => $payload['predicted_label'] ?? null,
             'confidence' => $payload['confidence'] ?? null,
             'model_version' => $payload['model_version'] ?? null,
+            'solution_text' => $payload['solution_text'] ?? null,
             'status' => $payload['status'] ?? 'completed',
         ]);
 
@@ -38,6 +64,7 @@ class DiseaseScanService
 
     public function getById(int $id): ?DiseaseScan
     {
+        $this->ensureColumns();
         $stmt = Database::getConnection()->prepare('SELECT * FROM disease_scans WHERE id = :id LIMIT 1');
         $stmt->execute(['id' => $id]);
         $data = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -46,6 +73,7 @@ class DiseaseScanService
 
     public function getByUserId(int $userId, ?int $farmId = null): array
     {
+        $this->ensureColumns();
         if ($farmId !== null) {
             $stmt = Database::getConnection()->prepare(
                 'SELECT * FROM disease_scans WHERE user_id = :user_id AND farm_id = :farm_id ORDER BY created_at DESC'
