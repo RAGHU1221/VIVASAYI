@@ -1,18 +1,14 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'api_client.dart';
 
-class DiseaseScanResult {
-  final bool modelBundled;
-  final String? predictedLabel;
-  final double? confidence;
+class DiseaseAnalysisResult {
+  final String label;
+  final String solution;
 
-  const DiseaseScanResult({
-    required this.modelBundled,
-    this.predictedLabel,
-    this.confidence,
-  });
+  const DiseaseAnalysisResult({required this.label, required this.solution});
 }
 
 class DiseaseScanService {
@@ -20,31 +16,26 @@ class DiseaseScanService {
 
   DiseaseScanService({Dio? dio}) : _dio = dio ?? ApiClient.instance.dio;
 
-  /// Runs on-device inference against the bundled TFLite model, if present.
-  ///
-  /// No model is bundled with this repo yet (see flutter_app/docs/disease-scanner.md) —
-  /// this returns a stub result so the capture -> review -> save flow can be exercised
-  /// end-to-end before a real model is dropped into assets/models/.
-  Future<DiseaseScanResult> predict(File image) async {
-    // TODO: once a .tflite model is added to assets/models/, load it via
-    // package:tflite_flutter and run real inference here instead of the stub below.
-    return const DiseaseScanResult(modelBundled: false);
-  }
+  /// படத்தை base64-ah encode panni backend-ku anuppி, AI vision model
+  /// (NVIDIA Build) mூலம் நோய் + தீர்வு பெறும். Backend-லேயே DB-ல save
+  /// aagi, saved record return aagும் — appuram vera saveScan() call
+  /// pண்ண தேவை இல்லை.
+  Future<Map<String, dynamic>> analyze(File image, {int? farmId}) async {
+    final bytes = await image.readAsBytes();
+    final base64Image = base64Encode(bytes);
 
-  Future<Map<String, dynamic>> saveScan({
-    required String imagePath,
-    String? predictedLabel,
-    double? confidence,
-    String? modelVersion,
-    int? farmId,
-  }) async {
-    final response = await _dio.post('/disease-scans', data: {
-      'image_path': imagePath,
-      'predicted_label': predictedLabel,
-      'confidence': confidence,
-      'model_version': modelVersion,
-      'farm_id': farmId,
-    });
+    final ext = image.path.split('.').last.toLowerCase();
+    final mime = (ext == 'png') ? 'image/png' : 'image/jpeg';
+
+    final response = await _dio.post(
+      '/disease-scans/analyze',
+      data: {
+        'image_base64': base64Image,
+        'mime': mime,
+        if (farmId != null) 'farm_id': farmId,
+      },
+      options: Options(sendTimeout: const Duration(seconds: 60), receiveTimeout: const Duration(seconds: 60)),
+    );
     return response.data as Map<String, dynamic>;
   }
 
