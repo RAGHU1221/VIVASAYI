@@ -60,6 +60,25 @@ class FarmController
             $farmerId = (int) $payload['farmer_id'];
         } elseif ($userId !== null) {
             $farmer = $this->farmerService->getByUserId((int) $userId);
+            if ($farmer === null) {
+                // Self-heal: accounts created before farmer auto-creation was
+                // added to signup() won't have a farmers row yet. Create one
+                // on the fly instead of blocking farm creation.
+                $userService = new \App\Services\UserService();
+                $user = $userService->getById((int) $userId);
+                if ($user !== null) {
+                    try {
+                        $farmer = $this->farmerService->create([
+                            'uuid' => self::uuidV4(),
+                            'user_id' => $user->id,
+                            'name' => $user->name,
+                            'phone' => $user->phone,
+                        ]);
+                    } catch (\Throwable $e) {
+                        error_log('farm.create: farmer self-heal failed for user ' . $userId . ': ' . $e->getMessage());
+                    }
+                }
+            }
             if ($farmer !== null) {
                 $farmerId = $farmer->id;
             }
