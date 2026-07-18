@@ -138,6 +138,21 @@ class AuthController
             'is_active' => 1,
         ]);
 
+        // NOTE: farms table requires a farmer_id (via farmers.user_id lookup).
+        // Without this, "Create Farm" fails right after signup with
+        // "Farmer ID could not be determined" — auto-create the farmer
+        // record here so the flow works immediately for new accounts.
+        try {
+            $this->farmerService->create([
+                'uuid' => self::generateUuid(),
+                'user_id' => $user->id,
+                'name' => $name,
+                'phone' => $phone,
+            ]);
+        } catch (\Throwable $e) {
+            error_log('signup: farmer record auto-create failed for user ' . $user->id . ': ' . $e->getMessage());
+        }
+
         $secret = $_ENV['JWT_SECRET'] ?? 'change_me_securely';
         $issuedAt = time();
         $expiresAt = $issuedAt + (int) ($_ENV['JWT_TTL'] ?? 2592000); // default 30 days
